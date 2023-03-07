@@ -377,7 +377,7 @@ class TDQN:
         self.iterations = 0
 
         # Initialization of the tensorboard writer
-        self.writer = SummaryWriter('runs/' + datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S"))
+        self.writer = SummaryWriter('runs/' + datetime.datetime.now().strftime("%d/%m/%Y-%H.%M.%S"))
 
     
     def getNormalizationCoefficients(self, tradingEnv):
