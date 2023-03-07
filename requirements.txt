@@ -10,6 +10,10 @@ requests
 tqdm
 tabulate
 
+# Finance
+yahoo_fin
+alpha_vantage
+
 # Deep Learning framework
 torch
 tensorboard
