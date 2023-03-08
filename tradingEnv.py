@@ -25,6 +25,8 @@ from dataDownloader import YahooFinance
 from dataDownloader import CSVHandler
 from fictiveStockGenerator import StockGenerator
 
+from displayManager import *
+
 
 
 ###############################################################################
@@ -358,7 +360,7 @@ class TradingEnv(gym.Env):
         return self.state, self.reward, self.done, self.info
 
 
-    def render(self):
+    def render(self, displayOptions=DisplayOption(), _displayManager=None):
         """
         GOAL: Illustrate graphically the trading activity, by plotting
               both the evolution of the stock market price and the 
@@ -369,14 +371,16 @@ class TradingEnv(gym.Env):
         
         OUTPUTS: /
         """
-
         # Set the Matplotlib figure and subplots
-        fig = plt.figure(figsize=(10, 8))
-        ax1 = fig.add_subplot(211, ylabel='Price', xlabel='Time')
-        ax2 = fig.add_subplot(212, ylabel='Capital', xlabel='Time', sharex=ax1)
+        displayManager = DisplayManager(displayOptions=displayOptions, figsize=(10, 8)) if not _displayManager else _displayManager
+        ax1 = displayManager.add_subplot(311, ylabel='Price', xlabel='Time')
+        ax2 = displayManager.add_subplot(312, ylabel='Capital', xlabel='Time', sharex=ax1)
+        ax3 = displayManager.add_subplot(313, ylabel='Liquidity', xlabel='Time', sharex=ax1)
+
+        timestamps = self.data.index[:self.t].to_numpy()
 
         # Plot the first graph -> Evolution of the stock market price
-        self.data['Close'].plot(ax=ax1, color='blue', lw=2)
+        ax1.plot(timestamps, self.data['Close'][:self.t].to_numpy(), color='blue', lw=1)
         ax1.plot(self.data.loc[self.data['Action'] == 1.0].index, 
                  self.data['Close'][self.data['Action'] == 1.0],
                  '^', markersize=5, color='green')   
@@ -385,7 +389,7 @@ class TradingEnv(gym.Env):
                  'v', markersize=5, color='red')
         
         # Plot the second graph -> Evolution of the trading capital
-        self.data['Money'].plot(ax=ax2, color='blue', lw=2)
+        ax2.plot(timestamps, self.data['Money'][:self.t].to_numpy(), color='blue', lw=1)
         ax2.plot(self.data.loc[self.data['Action'] == 1.0].index, 
                  self.data['Money'][self.data['Action'] == 1.0],
                  '^', markersize=5, color='green')   
@@ -393,11 +397,20 @@ class TradingEnv(gym.Env):
                  self.data['Money'][self.data['Action'] == -1.0],
                  'v', markersize=5, color='red')
         
+        # Plot the third graph -> Evolution of the liquid assets
+        ax3.plot(timestamps, self.data['Cash'][:self.t].to_numpy(), color='blue', lw=1)
+        ax3.plot(self.data.loc[self.data['Action'] == 1.0].index, 
+                 self.data['Cash'][self.data['Action'] == 1.0],
+                 '^', markersize=5, color='green')   
+        ax3.plot(self.data.loc[self.data['Action'] == -1.0].index, 
+                 self.data['Cash'][self.data['Action'] == -1.0],
+                 'v', markersize=5, color='red')
+        
         # Generation of the two legends and plotting
         ax1.legend(["Price", "Long",  "Short"])
         ax2.legend(["Capital", "Long", "Short"])
-        plt.savefig(''.join(['Figures/', str(self.marketSymbol), '_Rendering', '.png']))
-        #plt.show()
+        ax3.legend(["Cash", "Long", "Short"])
+        displayManager.show(f"{str(self.marketSymbol)}_Rendering")
 
 
     def setStartingPoint(self, startingPoint):

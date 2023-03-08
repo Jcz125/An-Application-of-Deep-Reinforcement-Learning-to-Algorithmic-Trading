@@ -29,7 +29,7 @@ from tradingEnv import TradingEnv
 from tradingPerformance import PerformanceEstimator
 from timeSeriesAnalyser import TimeSeriesAnalyser
 from TDQN import TDQN
-
+from displayManager import *
 
 
 ###############################################################################
@@ -56,7 +56,7 @@ money = 100000
 # Variables specifying the default general training parameters
 bounds = [1, 30]
 step = 1
-numberOfEpisodes = 50
+numberOfEpisodes = 25
 
 # Dictionary listing the fictive stocks supported
 fictives = {
@@ -323,6 +323,88 @@ class TradingSimulator:
         #plt.show()
 
 
+    def getTradingStrategy(self, strategyName, observationSpace=observationSpace, actionSpace=actionSpace, 
+                    bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes):
+        # Retrieve the trading strategy information
+        if(strategyName in strategies):
+            strategy = strategies[strategyName]
+            trainingParameters = [bounds, step]
+            ai = False
+        elif(strategyName in strategiesAI):
+            strategy = strategiesAI[strategyName]
+            trainingParameters = [numberOfEpisodes]
+            ai = True
+        # Error message if the strategy specified is not valid or not supported
+        else:
+            print("The strategy specified is not valid, only the following strategies are supported:")
+            for strategy in strategies:
+                print("".join(['- ', strategy]))
+            for strategy in strategiesAI:
+                print("".join(['- ', strategy]))
+            raise SystemError("Please check the trading strategy specified.")
+
+        # Instanciate the strategy classes
+        if ai:
+            strategyModule = importlib.import_module(str(strategy))
+            className = getattr(strategyModule, strategy)
+            tradingStrategy = className(observationSpace, actionSpace)
+        else:
+            strategyModule = importlib.import_module('classicalStrategy')
+            className = getattr(strategyModule, strategy)
+            tradingStrategy = className()
+
+        return tradingStrategy, trainingParameters
+    
+    def getStock(self, stockName):
+        # Retrieve the trading stock information
+        if(stockName in fictives):
+            stock = fictives[stockName]
+        elif(stockName in indices):
+            stock = indices[stockName]
+        elif(stockName in companies):
+            stock = companies[stockName]    
+        # Error message if the stock specified is not valid or not supported
+        else:
+            print("The stock specified is not valid, only the following stocks are supported:")
+            for stock in fictives:
+                print("".join(['- ', stock]))
+            for stock in indices:
+                print("".join(['- ', stock]))
+            for stock in companies:
+                print("".join(['- ', stock]))
+            raise SystemError("Please check the stock specified.")
+        return stock
+
+    
+    def simulateStrategy(self, strategyName, stockName,
+                        startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
+                        money=money, observationSpace=observationSpace, actionSpace=actionSpace, 
+                        bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes, stateLength=stateLength, 
+                        transactionCosts=transactionCosts):
+        # 1. INIT PHASE
+        stock = self.getStock(stockName)
+        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, observationSpace, actionSpace, bounds, step, numberOfEpisodes)
+        # 2. TRAINING PHASE
+        # Initialize the trading environment associated with the training phase
+        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts)
+        # Training of the trading strategy
+        trainingEnv = tradingStrategy.training(trainingEnv, trainingParameters=trainingParameters,
+                                               verbose=True, 
+                                               rendering=DisplayOption(False, False),
+                                               plotTraining=DisplayOption(False, False), 
+                                               showPerformance=False,
+                                               interactiveTradingGraph=False)
+        # 3. TESTING PHASE
+        # Initialize the trading environment associated with the testing phase
+        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts)
+        # Testing of the trading strategy
+        testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, 
+                                             rendering=DisplayOption(False, False),
+                                             showPerformance=False,
+                                             interactiveTradingGraph=True)
+        # return tradingStrategy, trainingEnv, testingEnv
+        
+
     def simulateNewStrategy(self, strategyName, stockName,
                             startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
                             observationSpace=observationSpace, actionSpace=actionSpace, 
@@ -399,12 +481,6 @@ class TradingSimulator:
                 print("".join(['- ', stock]))
             raise SystemError("Please check the stock specified.")
 
-
-        # 2. TRAINING PHASE
-
-        # Initialize the trading environment associated with the training phase
-        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts)
-
         # Instanciate the strategy classes
         if ai:
             strategyModule = importlib.import_module(str(strategy))
@@ -414,6 +490,11 @@ class TradingSimulator:
             strategyModule = importlib.import_module('classicalStrategy')
             className = getattr(strategyModule, strategy)
             tradingStrategy = className()
+
+        # 2. TRAINING PHASE
+
+        # Initialize the trading environment associated with the training phase
+        trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts)
 
         # Training of the trading strategy
         trainingEnv = tradingStrategy.training(trainingEnv, trainingParameters=trainingParameters,

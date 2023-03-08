@@ -32,6 +32,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tradingPerformance import PerformanceEstimator
 from dataAugmentation import DataAugmentation
 from tradingEnv import TradingEnv
+from displayManager import *
 
 
 
@@ -620,7 +621,11 @@ class TDQN:
 
 
     def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+                 verbose=False, 
+                 rendering=DisplayOption(), 
+                 plotTraining=DisplayOption(), 
+                 showPerformance=False,
+                 interactiveTradingGraph=False):
         """
         GOAL: Train the RL trading agent by interacting with its trading environment.
         
@@ -642,10 +647,12 @@ class TDQN:
         trainingEnv = self.plotExpectedPerformance(trainingEnv, trainingParameters, iterations=50)
         return trainingEnv
         """
-
+        verbose = verbose and not interactiveTradingGraph
+        
         # Apply data augmentation techniques to improve the training set
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Initialization of some variables tracking the training and testing performances
         if plotTraining:
@@ -721,7 +728,10 @@ class TDQN:
                         # Continuous tracking of the training performance
                         if plotTraining:
                             totalReward += reward
-                    
+
+                        if interactiveDisplayManager:
+                            trainingEnvList[i].render(_displayManager=interactiveDisplayManager)
+                        
                     # Store the current training results
                     if plotTraining:
                         score[i][episode] = totalReward
@@ -729,14 +739,20 @@ class TDQN:
                 # Compute the current performance on both the training and testing sets
                 if plotTraining:
                     # Training set performance
-                    trainingEnv = self.testing(trainingEnv, trainingEnv)
+                    trainingEnv = self.testing(trainingEnv, trainingEnv, 
+                                               rendering=plotTraining, 
+                                               showPerformance=showPerformance, 
+                                               interactiveTradingGraph=interactiveTradingGraph)
                     analyser = PerformanceEstimator(trainingEnv.data)
                     performance = analyser.computeSharpeRatio()
                     performanceTrain.append(performance)
                     self.writer.add_scalar('Training performance (Sharpe Ratio)', performance, episode)
                     trainingEnv.reset()
                     # Testing set performance
-                    testingEnv = self.testing(trainingEnv, testingEnv)
+                    testingEnv = self.testing(trainingEnv, testingEnv, 
+                                              rendering=plotTraining, 
+                                              showPerformance=showPerformance, 
+                                              interactiveTradingGraph=interactiveTradingGraph)
                     analyser = PerformanceEstimator(testingEnv.data)
                     performance = analyser.computeSharpeRatio()
                     performanceTest.append(performance)
@@ -754,19 +770,18 @@ class TDQN:
 
         # If required, show the rendering of the trading environment
         if rendering:
-            trainingEnv.render()
+            trainingEnv.render(rendering)
 
         # If required, plot the training results
         if plotTraining:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
+            displayManager = DisplayManager(displayOptions=plotTraining)
+            ax = displayManager.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
             ax.plot(performanceTrain)
             ax.plot(performanceTest)
             ax.legend(["Training", "Testing"])
-            plt.savefig(''.join(['Figures/', str(marketSymbol), '_TrainingTestingPerformance', '.png']))
-            #plt.show()
+            displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
-                self.plotTraining(score[i][:episode], marketSymbol)
+                self.plotTraining(score[i][:episode], marketSymbol, plotTraining)
 
         # If required, print the strategy performance in a table
         if showPerformance:
@@ -779,7 +794,7 @@ class TDQN:
         return trainingEnv
 
 
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
         GOAL: Test the RL agent trading policy on a new trading environment
               in order to assess the trading strategy performance.
@@ -805,6 +820,7 @@ class TDQN:
         QValues0 = []
         QValues1 = []
         done = 0
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Interact with the environment until the episode termination
         while done == 0:
@@ -823,10 +839,14 @@ class TDQN:
             QValues0.append(QValues[0])
             QValues1.append(QValues[1])
 
+            if interactiveDisplayManager:
+                testingEnv.render(_displayManager=interactiveDisplayManager)
+
+
         # If required, show the rendering of the trading environment
         if rendering:
-            testingEnv.render()
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol)
+            testingEnv.render(rendering)
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, rendering)
 
         # If required, print the strategy performance in a table
         if showPerformance:
@@ -836,7 +856,7 @@ class TDQN:
         return testingEnv
 
 
-    def plotTraining(self, score, marketSymbol):
+    def plotTraining(self, score, marketSymbol, displayOption=DisplayOption()):
         """
         GOAL: Plot the training phase results
               (score, sum of rewards).
@@ -846,15 +866,13 @@ class TDQN:
         
         OUTPUTS: /
         """
-
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111, ylabel='Total reward collected', xlabel='Episode')
+        displayManager = DisplayManager(displayOptions=displayOption)
+        ax1 = displayManager.add_subplot(111, ylabel='Total reward collected', xlabel='Episode')
         ax1.plot(score)
-        plt.savefig(''.join(['Figures/', str(marketSymbol), 'TrainingResults', '.png']))
-        #plt.show()
+        displayManager.show(f"{str(marketSymbol)} TrainingResults")
 
     
-    def plotQValues(self, QValues0, QValues1, marketSymbol):
+    def plotQValues(self, QValues0, QValues1, marketSymbol, displayOption=DisplayOption()):
         """
         Plot sequentially the Q values related to both actions.
         
@@ -864,17 +882,17 @@ class TDQN:
         
         :return: /
         """
-
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111, ylabel='Q values', xlabel='Time')
+        displayManager = DisplayManager(displayOptions=displayOption)
+        ax1 = displayManager.add_subplot(111, ylabel='Q values', xlabel='Time')
         ax1.plot(QValues0)
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_QValues', '.png']))
-        #plt.show()
+        displayManager.show(f"{str(marketSymbol)}_QValues")
 
 
-    def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10):
+    def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, 
+                                trainingTestingPerformanceDisplayOption=DisplayOption(),
+                                trainingTestingExpectedPerformanceDisplayOption=DisplayOption()):
         """
         GOAL: Plot the expected performance of the intelligent DRL trading agent.
         
@@ -1011,29 +1029,27 @@ class TDQN:
         stdPerformanceTest = np.array(stdPerformanceTest)
 
         # Plot each training/testing iteration performance of the intelligent DRL trading agent
+        displayManager = DisplayManager(displayOptions=trainingTestingPerformanceDisplayOption)
         for i in range(iteration):
-            fig = plt.figure()
-            ax = fig.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
+            ax = displayManager.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
             ax.plot([performanceTrain[e][i] for e in range(trainingParameters[0])])
             ax.plot([performanceTest[e][i] for e in range(trainingParameters[0])])
             ax.legend(["Training", "Testing"])
-            plt.savefig(''.join(['Figures/', str(marketSymbol), '_TrainingTestingPerformance', str(i+1), '.png']))
-            #plt.show()
+            displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance_{str(i+1)}")
 
         # Plot the expected performance of the intelligent DRL trading agent
-        fig = plt.figure()
-        ax = fig.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
+        displayManager = DisplayManager(displayOptions=trainingTestingExpectedPerformanceDisplayOption)
+        ax = displayManager.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
         ax.plot(expectedPerformanceTrain)
         ax.plot(expectedPerformanceTest)
         ax.fill_between(range(len(expectedPerformanceTrain)), expectedPerformanceTrain-stdPerformanceTrain, expectedPerformanceTrain+stdPerformanceTrain, alpha=0.25)
         ax.fill_between(range(len(expectedPerformanceTest)), expectedPerformanceTest-stdPerformanceTest, expectedPerformanceTest+stdPerformanceTest, alpha=0.25)
         ax.legend(["Training", "Testing"])
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_TrainingTestingExpectedPerformance', '.png']))
-        #plt.show()
+        displayManager.show(f"{str(marketSymbol)}_TrainingTestingExpectedPerformance")
 
         # Closing of the tensorboard writer
         self.writer.close()
-        
+
         return trainingEnv
 
         
@@ -1062,7 +1078,7 @@ class TDQN:
         self.targetNetwork.load_state_dict(self.policyNetwork.state_dict())
 
 
-    def plotEpsilonAnnealing(self):
+    def plotEpsilonAnnealing(self, displayOption=DisplayOption()):
         """
         GOAL: Plot the annealing behaviour of the Epsilon variable
               (Epsilon-Greedy exploration technique).
@@ -1071,10 +1087,9 @@ class TDQN:
         
         OUTPUTS: /
         """
-
-        plt.figure()
+        displayManager = DisplayManager(displayOptions=displayOption)
+        fig = displayManager.getFigure()
         plt.plot([self.epsilonValue(i) for i in range(10*epsilonDecay)])
         plt.xlabel("Iterations")
         plt.ylabel("Epsilon value")
-        plt.savefig(''.join(['Figures/', 'EpsilonAnnealing', '.png']))
-        #plt.show()
+        displayManager.show(f"EpsilonAnnealing")
