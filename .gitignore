@@ -2,6 +2,7 @@ __pycache__/*
 env-trade/*
 runs/*
 Figures/*.png
+Data/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
