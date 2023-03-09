@@ -766,11 +766,15 @@ class TDQN:
             self.policyNetwork.eval()
 
         # Assess the algorithm performance on the training trading environment
-        trainingEnv = self.testing(trainingEnv, trainingEnv)
+        trainingEnv = self.testing(trainingEnv, 
+                                   trainingEnv, 
+                                   rendering=rendering, 
+                                   showPerformance=showPerformance, 
+                                   interactiveTradingGraph=interactiveTradingGraph)
 
         # If required, show the rendering of the trading environment
         if rendering:
-            trainingEnv.render(rendering)
+            trainingEnv.render(displayOptions=rendering)
 
         # If required, plot the training results
         if plotTraining:
@@ -781,7 +785,7 @@ class TDQN:
             ax.legend(["Training", "Testing"])
             displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
-                self.plotTraining(score[i][:episode], marketSymbol, plotTraining)
+                self.plotTraining(score[i][:episode], marketSymbol, displayOption=plotTraining)
 
         # If required, print the strategy performance in a table
         if showPerformance:
@@ -846,7 +850,7 @@ class TDQN:
         # If required, show the rendering of the trading environment
         if rendering:
             testingEnv.render(rendering)
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, rendering)
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering)
 
         # If required, print the strategy performance in a table
         if showPerformance:

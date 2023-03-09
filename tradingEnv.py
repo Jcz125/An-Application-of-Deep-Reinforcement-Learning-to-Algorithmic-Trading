@@ -26,7 +26,9 @@ from dataDownloader import CSVHandler
 from fictiveStockGenerator import StockGenerator
 
 from displayManager import *
-
+from yahoo_fin import stock_info
+from datetime import datetime
+import time
 
 
 ###############################################################################
@@ -69,7 +71,7 @@ class TradingEnv(gym.Env):
     """
 
     def __init__(self, marketSymbol, startingDate, endingDate, money, stateLength=30,
-                 transactionCosts=0, startingPoint=0):
+                 transactionCosts=0, startingPoint=0, liveData=False):
         """
         GOAL: Object constructor initializing the trading environment by setting up
               the trading activity dataframe as well as other important variables.
@@ -153,6 +155,8 @@ class TradingEnv(gym.Env):
         self.numberOfShares = 0
         self.transactionCosts = transactionCosts
         self.epsilon = 0.1
+        self.liveData = liveData
+        self.timestamp = None
 
         # If required, set a custom starting point for the trading activity
         if startingPoint:
@@ -212,6 +216,19 @@ class TradingEnv(gym.Env):
             lowerBound = deltaValues / (price * self.epsilon * (1 + self.transactionCosts))
         return lowerBound
     
+    def getLiveData(self, last={}):
+        si = stock_info.get_quote_data(self.marketSymbol)
+        stock_data = {
+            'Open': si['regularMarketOpen'], 
+            'High': si['regularMarketDayHigh'], 
+            'Low': si['regularMarketDayLow'], 
+            'Close': si['regularMarketPrice'], 
+            'Volume': si['regularMarketVolume'],
+            **last,
+        }
+        unix_epoch = si['regularMarketTime']
+        timestamp = datetime.fromtimestamp(unix_epoch)
+        return timestamp, stock_data 
 
     def step(self, action):
         """
@@ -302,8 +319,19 @@ class TradingEnv(gym.Env):
                       self.data['High'][self.t - self.stateLength : self.t].tolist(),
                       self.data['Volume'][self.t - self.stateLength : self.t].tolist(),
                       [self.data['Position'][self.t - 1]]]
-        if(self.t == self.data.shape[0]):
-            self.done = 1  
+        
+        if (self.t == self.data.shape[0]):
+            if (self.liveData):
+                timestamp, stock_data  = self.getLiveData(self.data.iloc[t].to_dict())
+                if (self.timestamp and self.timestamp == timestamp and not self.done):
+                    # print("Market is closed !")
+                    self.done = 1
+                else:
+                    self.data.loc[timestamp] = stock_data
+                    self.timestamp = timestamp
+                    time.sleep(1)
+            else:
+                self.done = 1
 
         # Same reasoning with the other action (exploration trick)
         otherAction = int(not bool(action))

@@ -51,12 +51,12 @@ percentageCosts = [0, 0.1, 0.2]
 transactionCosts = percentageCosts[1]/100
 
 # Variables specifying the default capital at the disposal of the trader
-money = 100000
+money = 10000
 
 # Variables specifying the default general training parameters
 bounds = [1, 30]
 step = 1
-numberOfEpisodes = 25
+numberOfEpisodes = 50
 
 # Dictionary listing the fictive stocks supported
 fictives = {
@@ -357,38 +357,30 @@ class TradingSimulator:
     
     def getStock(self, stockName):
         # Retrieve the trading stock information
+        stock = stockName
         if(stockName in fictives):
             stock = fictives[stockName]
         elif(stockName in indices):
             stock = indices[stockName]
         elif(stockName in companies):
-            stock = companies[stockName]    
-        # Error message if the stock specified is not valid or not supported
-        else:
-            print("The stock specified is not valid, only the following stocks are supported:")
-            for stock in fictives:
-                print("".join(['- ', stock]))
-            for stock in indices:
-                print("".join(['- ', stock]))
-            for stock in companies:
-                print("".join(['- ', stock]))
-            raise SystemError("Please check the stock specified.")
+            stock = companies[stockName]
         return stock
 
-    
     def simulateStrategy(self, strategyName, stockName,
                         startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
-                        money=money, observationSpace=observationSpace, actionSpace=actionSpace, 
-                        bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes, stateLength=stateLength, 
-                        transactionCosts=transactionCosts):
+                        money=money, stateLength=stateLength, observationSpace=None, actionSpace=actionSpace, 
+                        bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,  transactionCosts=transactionCosts, 
+                        interactiveTest=False, showTestPerformance=False, testOnLiveData=False):
         # 1. INIT PHASE
+        observationSpace = 1 + (stateLength-1)*4 if not observationSpace else observationSpace
         stock = self.getStock(stockName)
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, observationSpace, actionSpace, bounds, step, numberOfEpisodes)
         # 2. TRAINING PHASE
         # Initialize the trading environment associated with the training phase
         trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts)
         # Training of the trading strategy
-        trainingEnv = tradingStrategy.training(trainingEnv, trainingParameters=trainingParameters,
+        trainingEnv = tradingStrategy.training(trainingEnv, 
+                                               trainingParameters=trainingParameters,
                                                verbose=True, 
                                                rendering=DisplayOption(False, False),
                                                plotTraining=DisplayOption(False, False), 
@@ -396,13 +388,14 @@ class TradingSimulator:
                                                interactiveTradingGraph=False)
         # 3. TESTING PHASE
         # Initialize the trading environment associated with the testing phase
-        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts)
+        testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, liveData=testOnLiveData)
         # Testing of the trading strategy
-        testingEnv = tradingStrategy.testing(trainingEnv, testingEnv, 
+        testingEnv = tradingStrategy.testing(trainingEnv,
+                                             testingEnv,
                                              rendering=DisplayOption(False, False),
-                                             showPerformance=False,
-                                             interactiveTradingGraph=True)
-        # return tradingStrategy, trainingEnv, testingEnv
+                                             showPerformance=showTestPerformance,
+                                             interactiveTradingGraph=interactiveTest)
+        return tradingStrategy, trainingEnv, testingEnv
         
 
     def simulateNewStrategy(self, strategyName, stockName,
