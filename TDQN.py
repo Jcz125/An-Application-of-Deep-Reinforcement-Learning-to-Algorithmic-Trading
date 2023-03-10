@@ -849,7 +849,8 @@ class TDQN:
 
         # If required, show the rendering of the trading environment
         if rendering:
-            testingEnv.render(rendering)
+            if (not interactiveDisplayManager):
+                testingEnv.render(rendering)
             self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering)
 
         # If required, print the strategy performance in a table

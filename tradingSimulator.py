@@ -370,7 +370,7 @@ class TradingSimulator:
                         startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
                         money=money, stateLength=stateLength, observationSpace=None, actionSpace=actionSpace, 
                         bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,  transactionCosts=transactionCosts, 
-                        interactiveTest=False, showTestPerformance=False, testOnLiveData=False):
+                        interactiveTest=False, testShowPerformance=False, testOnLiveData=False, testPlotQValues=False):
         # 1. INIT PHASE
         observationSpace = 1 + (stateLength-1)*4 if not observationSpace else observationSpace
         stock = self.getStock(stockName)
@@ -392,8 +392,8 @@ class TradingSimulator:
         # Testing of the trading strategy
         testingEnv = tradingStrategy.testing(trainingEnv,
                                              testingEnv,
-                                             rendering=DisplayOption(False, False),
-                                             showPerformance=showTestPerformance,
+                                             rendering=DisplayOption(False, testPlotQValues),
+                                             showPerformance=testShowPerformance,
                                              interactiveTradingGraph=interactiveTest)
         return tradingStrategy, trainingEnv, testingEnv
         

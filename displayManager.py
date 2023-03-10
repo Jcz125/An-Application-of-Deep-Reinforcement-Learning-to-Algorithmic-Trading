@@ -41,24 +41,28 @@ class DisplayManager:
         return ax
     
     def plot(self, ax, lineId, x, y, **kwargs):
-        if True or lineId not in self.subplots_line_draw[ax]:
+        if lineId not in self.subplots_line_draw[ax]:
             line, = ax.plot(x, y, **kwargs)
             self.subplots_line_draw[ax][lineId] = line
             return line
         line = self.subplots_line_draw[ax][lineId]
         line.set_data(x, y)
+        if 'marker' in kwargs:
+            line.set_marker(kwargs['marker'])
         return line
 
     def show(self, title):
         if self.displayOptions.interactive:
-            self.figure.suptitle(title)
-            self.figure.canvas.draw_idle()
-            self.figure.canvas.flush_events()
-            self.display.update(self.figure)
-            
-            # display.clear_output(wait=True)
+            ## Enable this if you use vanilla notebook or google collab
             # self.figure.suptitle(title)
-            # display.display(self.figure)
+            # self.figure.canvas.draw()
+            # self.figure.canvas.flush_events()
+            # self.display.update(self.figure)
+
+            ## Enable this for VS Code (it's buggy)
+            display.clear_output(wait=True)
+            self.figure.suptitle(title)
+            display.display(self.figure)
         if self.displayOptions.saveToDisk:
             plt.savefig(''.join(['Figures/', title, '.png']))
         
