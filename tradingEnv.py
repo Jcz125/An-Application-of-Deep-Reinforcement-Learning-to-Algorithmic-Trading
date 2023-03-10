@@ -219,12 +219,12 @@ class TradingEnv(gym.Env):
     def getLiveData(self, last={}):
         si = stock_info.get_quote_data(self.marketSymbol)
         stock_data = {
+            **last,
             'Open': si['regularMarketOpen'], 
             'High': si['regularMarketDayHigh'], 
             'Low': si['regularMarketDayLow'], 
             'Close': si['regularMarketPrice'], 
             'Volume': si['regularMarketVolume'],
-            **last,
         }
         unix_epoch = si['regularMarketTime']
         timestamp = datetime.fromtimestamp(unix_epoch)
@@ -329,7 +329,8 @@ class TradingEnv(gym.Env):
                 else:
                     self.data.loc[timestamp] = stock_data
                     self.timestamp = timestamp
-                    time.sleep(1)
+                    display(self.data)
+                    time.sleep(15)
             else:
                 self.done = 1
 
@@ -406,33 +407,32 @@ class TradingEnv(gym.Env):
         ax3 = displayManager.add_subplot(313, ylabel='Liquidity', xlabel='Time', sharex=ax1)
 
         timestamps = self.data.index[:self.t].to_numpy()
-
         # Plot the first graph -> Evolution of the stock market price
-        ax1.plot(timestamps, self.data['Close'][:self.t].to_numpy(), color='blue', lw=1)
-        ax1.plot(self.data.loc[self.data['Action'] == 1.0].index, 
-                 self.data['Close'][self.data['Action'] == 1.0],
-                 '^', markersize=5, color='green')   
-        ax1.plot(self.data.loc[self.data['Action'] == -1.0].index, 
-                 self.data['Close'][self.data['Action'] == -1.0],
-                 'v', markersize=5, color='red')
+        displayManager.plot(ax1, 0, timestamps, self.data['Close'][:self.t].to_numpy(), color='blue', lw=1)
+        displayManager.plot(ax1, 1, self.data.loc[self.data['Action'] == 1.0].index, 
+                            self.data['Close'][self.data['Action'] == 1.0],
+                            marker='^', markersize=5, color='green')   
+        displayManager.plot(ax1, 2, self.data.loc[self.data['Action'] == -1.0].index, 
+                            self.data['Close'][self.data['Action'] == -1.0],
+                            marker='v', markersize=5, color='red')
         
         # Plot the second graph -> Evolution of the trading capital
-        ax2.plot(timestamps, self.data['Money'][:self.t].to_numpy(), color='blue', lw=1)
-        ax2.plot(self.data.loc[self.data['Action'] == 1.0].index, 
-                 self.data['Money'][self.data['Action'] == 1.0],
-                 '^', markersize=5, color='green')   
-        ax2.plot(self.data.loc[self.data['Action'] == -1.0].index, 
-                 self.data['Money'][self.data['Action'] == -1.0],
-                 'v', markersize=5, color='red')
+        displayManager.plot(ax2, 0, timestamps, self.data['Money'][:self.t].to_numpy(), color='blue', lw=1)
+        displayManager.plot(ax2, 1, self.data.loc[self.data['Action'] == 1.0].index, 
+                            self.data['Money'][self.data['Action'] == 1.0],
+                            marker='^', markersize=5, color='green')   
+        displayManager.plot(ax2, 2, self.data.loc[self.data['Action'] == -1.0].index, 
+                            self.data['Money'][self.data['Action'] == -1.0],
+                           marker= 'v', markersize=5, color='red')
         
         # Plot the third graph -> Evolution of the liquid assets
-        ax3.plot(timestamps, self.data['Cash'][:self.t].to_numpy(), color='blue', lw=1)
-        ax3.plot(self.data.loc[self.data['Action'] == 1.0].index, 
-                 self.data['Cash'][self.data['Action'] == 1.0],
-                 '^', markersize=5, color='green')   
-        ax3.plot(self.data.loc[self.data['Action'] == -1.0].index, 
-                 self.data['Cash'][self.data['Action'] == -1.0],
-                 'v', markersize=5, color='red')
+        displayManager.plot(ax3, 0, timestamps, self.data['Cash'][:self.t].to_numpy(), color='blue', lw=1)
+        displayManager.plot(ax3, 1, self.data.loc[self.data['Action'] == 1.0].index, 
+                            self.data['Cash'][self.data['Action'] == 1.0],
+                            marker='^', markersize=5, color='green')   
+        displayManager.plot(ax3, 2, self.data.loc[self.data['Action'] == -1.0].index, 
+                            self.data['Cash'][self.data['Action'] == -1.0],
+                            marker='v', markersize=5, color='red')
         
         # Generation of the two legends and plotting
         ax1.legend(["Price", "Long",  "Short"])

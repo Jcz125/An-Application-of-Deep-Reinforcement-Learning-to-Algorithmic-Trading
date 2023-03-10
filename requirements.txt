@@ -2,6 +2,7 @@
 numpy
 scipy
 matplotlib
+ipympl
 pandas
 seaborn
 statsmodels
