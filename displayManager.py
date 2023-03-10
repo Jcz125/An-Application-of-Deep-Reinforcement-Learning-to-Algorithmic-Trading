@@ -52,12 +52,13 @@ class DisplayManager:
     def show(self, title):
         if self.displayOptions.interactive:
             self.figure.suptitle(title)
-            self.figure.canvas.draw()
+            self.figure.canvas.draw_idle()
+            self.figure.canvas.flush_events()
             self.display.update(self.figure)
-            # self.figure.canvas.flush_events()
-            # self.display.clear_output(wait=True)
+            
+            # display.clear_output(wait=True)
             # self.figure.suptitle(title)
-            # self.display.display(self.figure)
+            # display.display(self.figure)
         if self.displayOptions.saveToDisk:
             plt.savefig(''.join(['Figures/', title, '.png']))
         
