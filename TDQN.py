@@ -652,7 +652,7 @@ class TDQN:
         # Apply data augmentation techniques to improve the training set
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Initialization of some variables tracking the training and testing performances
         if plotTraining:
@@ -739,20 +739,14 @@ class TDQN:
                 # Compute the current performance on both the training and testing sets
                 if plotTraining:
                     # Training set performance
-                    trainingEnv = self.testing(trainingEnv, trainingEnv, 
-                                               rendering=plotTraining, 
-                                               showPerformance=showPerformance, 
-                                               interactiveTradingGraph=interactiveTradingGraph)
+                    trainingEnv = self.testing(trainingEnv, trainingEnv)
                     analyser = PerformanceEstimator(trainingEnv.data)
                     performance = analyser.computeSharpeRatio()
                     performanceTrain.append(performance)
                     self.writer.add_scalar('Training performance (Sharpe Ratio)', performance, episode)
                     trainingEnv.reset()
                     # Testing set performance
-                    testingEnv = self.testing(trainingEnv, testingEnv, 
-                                              rendering=plotTraining, 
-                                              showPerformance=showPerformance, 
-                                              interactiveTradingGraph=interactiveTradingGraph)
+                    testingEnv = self.testing(trainingEnv, testingEnv)
                     analyser = PerformanceEstimator(testingEnv.data)
                     performance = analyser.computeSharpeRatio()
                     performanceTest.append(performance)
@@ -766,15 +760,11 @@ class TDQN:
             self.policyNetwork.eval()
 
         # Assess the algorithm performance on the training trading environment
-        trainingEnv = self.testing(trainingEnv, 
-                                   trainingEnv, 
-                                   rendering=rendering, 
-                                   showPerformance=showPerformance, 
-                                   interactiveTradingGraph=interactiveTradingGraph)
+        trainingEnv = self.testing(trainingEnv, trainingEnv)
 
         # If required, show the rendering of the trading environment
         if rendering:
-            trainingEnv.render(displayOptions=rendering)
+            trainingEnv.render(displayOptions=rendering, extraText="Training")
 
         # If required, plot the training results
         if plotTraining:
@@ -790,7 +780,7 @@ class TDQN:
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
-            analyser.displayPerformance('TDQN')
+            analyser.displayPerformance('TDQN (Training)')
         
         # Closing of the tensorboard writer
         self.writer.close()
@@ -824,7 +814,7 @@ class TDQN:
         QValues0 = []
         QValues1 = []
         done = 0
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Interact with the environment until the episode termination
         while done == 0:
@@ -850,13 +840,13 @@ class TDQN:
         # If required, show the rendering of the trading environment
         if rendering:
             if (not interactiveDisplayManager):
-                testingEnv.render(rendering)
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering)
+                testingEnv.render(rendering, extraText="Testing")
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraTest="Testing")
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
-            analyser.displayPerformance('TDQN')
+            analyser.displayPerformance('TDQN (Testing)')
         
         return testingEnv
 
@@ -877,7 +867,7 @@ class TDQN:
         displayManager.show(f"{str(marketSymbol)} TrainingResults")
 
     
-    def plotQValues(self, QValues0, QValues1, marketSymbol, displayOption=DisplayOption()):
+    def plotQValues(self, QValues0, QValues1, marketSymbol, displayOption=DisplayOption(), extraTest=""):
         """
         Plot sequentially the Q values related to both actions.
         
@@ -892,7 +882,7 @@ class TDQN:
         ax1.plot(QValues0)
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
-        displayManager.show(f"{str(marketSymbol)}_QValues")
+        displayManager.show(f"{str(marketSymbol)}_{extraTest}QValues")
 
 
     def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, 

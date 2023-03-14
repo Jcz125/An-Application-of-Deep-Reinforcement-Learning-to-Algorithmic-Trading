@@ -389,7 +389,7 @@ class TradingEnv(gym.Env):
         return self.state, self.reward, self.done, self.info
 
 
-    def render(self, displayOptions=DisplayOption(), _displayManager=None):
+    def render(self, displayOptions=DisplayOption(), _displayManager=None, extraText=""):
         """
         GOAL: Illustrate graphically the trading activity, by plotting
               both the evolution of the stock market price and the 
@@ -401,7 +401,7 @@ class TradingEnv(gym.Env):
         OUTPUTS: /
         """
         # Set the Matplotlib figure and subplots
-        displayManager = DisplayManager(displayOptions=displayOptions, figsize=(10, 8)) if not _displayManager else _displayManager
+        displayManager = DisplayManager(displayOptions=displayOptions, figsize=(20.0, 10.0)) if not _displayManager else _displayManager
         ax1 = displayManager.add_subplot(311, ylabel='Price', xlabel='Time')
         ax2 = displayManager.add_subplot(312, ylabel='Capital', xlabel='Time', sharex=ax1)
         ax3 = displayManager.add_subplot(313, ylabel='Liquidity', xlabel='Time', sharex=ax1)
@@ -438,7 +438,7 @@ class TradingEnv(gym.Env):
         ax1.legend(["Price", "Long",  "Short"])
         ax2.legend(["Capital", "Long", "Short"])
         ax3.legend(["Cash", "Long", "Short"])
-        displayManager.show(f"{str(self.marketSymbol)}_Rendering")
+        displayManager.show(f"{str(self.marketSymbol)}_{extraText}Rendering")
 
 
     def setStartingPoint(self, startingPoint):

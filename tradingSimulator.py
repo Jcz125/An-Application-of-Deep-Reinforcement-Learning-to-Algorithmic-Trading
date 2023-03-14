@@ -369,7 +369,8 @@ class TradingSimulator:
     def simulateStrategy(self, strategyName, stockName,
                         startingDate=startingDate, endingDate=endingDate, splitingDate=splitingDate,
                         money=money, stateLength=stateLength, observationSpace=None, actionSpace=actionSpace, 
-                        bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,  transactionCosts=transactionCosts, 
+                        bounds=bounds, step=step, numberOfEpisodes=numberOfEpisodes,  transactionCosts=transactionCosts,
+                        interactiveTrain=False, trainShowPerformance=False, trainPlot=False, plotTrainEnv=False,
                         interactiveTest=False, testShowPerformance=False, testOnLiveData=False, testPlotQValues=False):
         # 1. INIT PHASE
         observationSpace = 1 + (stateLength-1)*4 if not observationSpace else observationSpace
@@ -381,18 +382,19 @@ class TradingSimulator:
         # Training of the trading strategy
         trainingEnv = tradingStrategy.training(trainingEnv, 
                                                trainingParameters=trainingParameters,
-                                               verbose=True, 
-                                               rendering=DisplayOption(False, False),
-                                               plotTraining=DisplayOption(False, False), 
-                                               showPerformance=False,
-                                               interactiveTradingGraph=False)
+                                               verbose=False, 
+                                               rendering=DisplayOption(False, plotTrainEnv, False),
+                                               plotTraining=DisplayOption(False, trainPlot, False), 
+                                               showPerformance=trainShowPerformance,
+                                               interactiveTradingGraph=interactiveTrain)
+        print("=================================== TESTING ===================================")
         # 3. TESTING PHASE
         # Initialize the trading environment associated with the testing phase
         testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, liveData=testOnLiveData)
         # Testing of the trading strategy
         testingEnv = tradingStrategy.testing(trainingEnv,
                                              testingEnv,
-                                             rendering=DisplayOption(False, testPlotQValues),
+                                             rendering=DisplayOption(False, testPlotQValues, False),
                                              showPerformance=testShowPerformance,
                                              interactiveTradingGraph=interactiveTest)
         return tradingStrategy, trainingEnv, testingEnv

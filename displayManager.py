@@ -4,12 +4,13 @@ from IPython import display
 from time import sleep
 
 class DisplayOption:
-    def __init__(self, saveToDisk=True, interactive=False):
+    def __init__(self, saveToDisk=False, notebook=False, interactive=False):
         self.saveToDisk = saveToDisk
+        self.notebook = notebook
         self.interactive = interactive
     
     def __bool__(self):
-        return self.saveToDisk or self.interactive
+        return self.saveToDisk or self.interactive or self.notebook
         
 
 class DisplayManager:
@@ -27,7 +28,7 @@ class DisplayManager:
         return self.figure
     
     def __bool__(self):
-        return self.displayOptions.saveToDisk or self.displayOptions.interactive
+        return self.displayOptions
     
     def add_subplot(self, *args, **kwargs):
         if args in self.subplots:
@@ -58,11 +59,14 @@ class DisplayManager:
             # self.figure.canvas.draw()
             # self.figure.canvas.flush_events()
             # self.display.update(self.figure)
-
             ## Enable this for VS Code (it's buggy)
             display.clear_output(wait=True)
             self.figure.suptitle(title)
             display.display(self.figure)
+        elif self.displayOptions.notebook:
+            self.figure.suptitle(title)
+            display.display(self.figure)
+            plt.close()
         if self.displayOptions.saveToDisk:
             plt.savefig(''.join(['Figures/', title, '.png']))
         
