@@ -18,6 +18,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from abc import ABC, abstractmethod
 
 from tradingPerformance import PerformanceEstimator
+from displayManager import *
+import pickle
 
 
 
@@ -56,8 +58,13 @@ class tradingStrategy(ABC):
     
 
     @abstractmethod
-    def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+    def training(self, trainingEnv, 
+                 trainingParameters=[],
+                 verbose=False, 
+                 rendering=DisplayOption(), 
+                 plotTraining=DisplayOption(), 
+                 showPerformance=False,
+                 interactiveTradingGraph=False):
         """
         GOAL: Train the trading strategy on a known trading environment
               (called training set) in order to tune the trading strategy
@@ -80,7 +87,7 @@ class tradingStrategy(ABC):
 
 
     @abstractmethod
-    def testing(self, testingEnv, trainingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
         GOAL: Test the trading strategy on another unknown trading
               environment (called testing set) in order to evaluate
@@ -96,6 +103,14 @@ class tradingStrategy(ABC):
         """
 
         pass
+
+    def saveModel(self, fileName):
+        fileHandler = open(fileName, 'wb') 
+        pickle.dump(self, fileHandler)
+
+    def loadModel(self, fileName):
+        fileHandler = open(fileName, 'rb') 
+        self = pickle.load(fileHandler)
 
 
 
@@ -135,8 +150,13 @@ class BuyAndHold(tradingStrategy):
         return 1
     
 
-    def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+    def training(self, trainingEnv, 
+                 trainingParameters=[],
+                 verbose=False, 
+                 rendering=DisplayOption(), 
+                 plotTraining=DisplayOption(), 
+                 showPerformance=False,
+                 interactiveTradingGraph=False):
         """
         GOAL: Train the trading strategy on a known trading environment
               (called training set) in order to tune the trading strategy
@@ -158,12 +178,15 @@ class BuyAndHold(tradingStrategy):
         
         OUTPUTS: - trainingEnv: Trading environment backtested.
         """
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         trainingEnv.reset()
         done = 0
         while done == 0:
             _, _, done, _ = trainingEnv.step(self.chooseAction(trainingEnv.state))
+            if interactiveDisplayManager:
+                trainingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, print a feedback about the training
         if verbose:
@@ -171,7 +194,7 @@ class BuyAndHold(tradingStrategy):
         
         # If required, render the trading environment backtested
         if rendering:
-            trainingEnv.render()
+            trainingEnv.render(displayOptions=rendering, extraText="Training")
         
         # If required, plot the training results
         if plotTraining:
@@ -180,13 +203,13 @@ class BuyAndHold(tradingStrategy):
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
-            analyser.displayPerformance('B&H')
+            analyser.displayPerformance('B&H (Training)')
 
         # Return the trading environment backtested (training set)
         return trainingEnv
 
 
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
         GOAL: Test the trading strategy on another unknown trading
               environment (called testing set) in order to evaluate
@@ -200,21 +223,24 @@ class BuyAndHold(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
         done = 0
         while done == 0:
             _, _, done, _ = testingEnv.step(self.chooseAction(testingEnv.state))
+            if interactiveDisplayManager:
+                testingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, render the trading environment backtested
         if rendering:
-            testingEnv.render()
+            testingEnv.render(displayOptions=rendering, extraText="Testing")
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
-            analyser.displayPerformance('B&H')
+            analyser.displayPerformance('B&H (Testing)')
 
         # Return the trading environment backtested (testing set)
         return testingEnv
@@ -257,8 +283,13 @@ class SellAndHold(tradingStrategy):
         return 0
     
 
-    def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+    def training(self, trainingEnv, 
+                 trainingParameters=[],
+                 verbose=False, 
+                 rendering=DisplayOption(), 
+                 plotTraining=DisplayOption(), 
+                 showPerformance=False,
+                 interactiveTradingGraph=False):
         """
         GOAL: Train the trading strategy on a known trading environment
               (called training set) in order to tune the trading strategy
@@ -280,12 +311,15 @@ class SellAndHold(tradingStrategy):
         
         OUTPUTS: - trainingEnv: Trading environment backtested.
         """
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         trainingEnv.reset()
         done = 0
         while done == 0:
             _, _, done, _ = trainingEnv.step(self.chooseAction(trainingEnv.state))
+            if interactiveDisplayManager:
+                trainingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, print a feedback about the training
         if verbose:
@@ -293,7 +327,7 @@ class SellAndHold(tradingStrategy):
         
         # If required, render the trading environment backtested
         if rendering:
-            trainingEnv.render()
+            trainingEnv.render(displayOptions=rendering, extraText="Training")
         
         # If required, plot the training results
         if plotTraining:
@@ -302,13 +336,13 @@ class SellAndHold(tradingStrategy):
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
-            analyser.displayPerformance('S&H')
+            analyser.displayPerformance('S&H (Training)')
 
         # Return the trading environment backtested (training set)
         return trainingEnv
 
 
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
         GOAL: Test the trading strategy on another unknown trading
               environment (called testing set) in order to evaluate
@@ -322,21 +356,24 @@ class SellAndHold(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
         done = 0
         while done == 0:
             _, _, done, _ = testingEnv.step(self.chooseAction(testingEnv.state))
+            if interactiveDisplayManager:
+                testingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, render the trading environment backtested
         if rendering:
-            testingEnv.render()
+            testingEnv.render(displayOptions=rendering, extraText="Testing")
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
-            analyser.displayPerformance('S&H')
+            analyser.displayPerformance('S&H (Testing)')
 
         # Return the trading environment backtested (testing set)
         return testingEnv
@@ -433,8 +470,13 @@ class MovingAveragesTF(tradingStrategy):
             return 0
     
 
-    def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+    def training(self, trainingEnv,
+                 trainingParameters=[],
+                 verbose=False, 
+                 rendering=DisplayOption(), 
+                 plotTraining=DisplayOption(), 
+                 showPerformance=False,
+                 interactiveTradingGraph=False):
         """
         GOAL: Train the trading strategy on a known trading environment
               (called training set) in order to tune the trading strategy
@@ -452,7 +494,7 @@ class MovingAveragesTF(tradingStrategy):
         OUTPUTS: - trainingEnv: Trading environment associated with the best
                                 trading strategy parameters backtested.
         """
-
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
         # Compute the dimension of the parameter search space
         bounds = trainingParameters[0]
         step = trainingParameters[1]
@@ -518,25 +560,27 @@ class MovingAveragesTF(tradingStrategy):
         done = 0
         while done == 0:
             _, _, done, _ = trainingEnv.step(self.chooseAction(trainingEnv.state))
+            if interactiveDisplayManager:
+                trainingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, render the trading environment backtested
         if rendering:
-            trainingEnv.render()
+            trainingEnv.render(displayOptions=rendering, extraText="Training")
         
         # If required, plot the training results
         if plotTraining:
-            self.plotTraining(results, bounds, step, trainingEnv.marketSymbol)
+            self.plotTraining(results, bounds, step, trainingEnv.marketSymbol, displayOption=plotTraining)
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
-            analyser.displayPerformance('MATF')
+            analyser.displayPerformance('MATF (Training)')
 
         # Return the trading environment backtested (training set)
         return trainingEnv
 
 
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
         GOAL: Test the trading strategy on another unknown trading
               environment (called testing set) in order to evaluate
@@ -550,27 +594,30 @@ class MovingAveragesTF(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
-
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
         done = 0
         while done == 0:
             _, _, done, _ = testingEnv.step(self.chooseAction(testingEnv.state))
+            if interactiveDisplayManager:
+                testingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, render the trading environment backtested
         if rendering:
-            testingEnv.render()
+            testingEnv.render(displayOptions=rendering, extraText="Testing")
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data,)
-            analyser.displayPerformance('MATF')
+            analyser.displayPerformance('MATF (Testing)')
 
         # Return the trading environment backtested (testing set)
         return testingEnv
 
 
-    def plotTraining(self, results, bounds, step, marketSymbol):
+    def plotTraining(self, results, bounds, step, marketSymbol, displayOption=DisplayOption()):
         """
         GOAL: Plot both 2D and 3D graphs illustrating the results of the entire
               training phase set of simulations, depicting the performance
@@ -590,8 +637,8 @@ class MovingAveragesTF(tradingStrategy):
         xx, yy = np.meshgrid(x, y, sparse=True)
 
         # Initialization of the 3D figure
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111, projection='3d')
+        displayManager1 = DisplayManager(displayOptions=displayOption)
+        ax = displayManager1.add_subplot(111, projection='3d')
         ax.set_xlabel('Long Window Duration')
         ax.set_ylabel('Short Window Duration')
         ax.set_zlabel('Sharpe Ratio')
@@ -599,12 +646,12 @@ class MovingAveragesTF(tradingStrategy):
         # Generate and show the 3D surface plot
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MATFOptimization3D', '.png']))
+        displayManager1.show(f"{str(marketSymbol)}_MATFOptimization3D_Training_Results")
         #plt.show()
 
         # Plot the same information as a 2D graph
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111,
+        displayManager2 = DisplayManager(displayOptions=displayOption)
+        ax = displayManager2.add_subplot(111,
                              ylabel='Short Window Duration',
                              xlabel='Long Window Duration')
         graph = ax.imshow(results,
@@ -612,7 +659,7 @@ class MovingAveragesTF(tradingStrategy):
                           extent=(bounds[0], bounds[1], bounds[1], bounds[0]))
         plt.colorbar(graph)
         plt.gca().invert_yaxis()
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MATFOptimization2D', '.png']))
+        displayManager2.show(f"{str(marketSymbol)}_MATFOptimization2D_Training_Results")
         #plt.show()
     
 
@@ -707,8 +754,13 @@ class MovingAveragesMR(tradingStrategy):
             return 0
     
 
-    def training(self, trainingEnv, trainingParameters=[],
-                 verbose=False, rendering=False, plotTraining=False, showPerformance=False):
+    def training(self, trainingEnv,
+                 trainingParameters=[],
+                 verbose=False, 
+                 rendering=DisplayOption(), 
+                 plotTraining=DisplayOption(), 
+                 showPerformance=False,
+                 interactiveTradingGraph=False):
         """
         GOAL: Train the trading strategy on a known trading environment
               (called training set) in order to tune the trading strategy
@@ -726,7 +778,7 @@ class MovingAveragesMR(tradingStrategy):
         OUTPUTS: - trainingEnv: Trading environment associated with the best
                                 trading strategy parameters backtested.
         """
-
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
         # Compute the dimension of the parameter search space
         bounds = trainingParameters[0]
         step = trainingParameters[1]
@@ -792,25 +844,27 @@ class MovingAveragesMR(tradingStrategy):
         done = 0
         while done == 0:
             _, _, done, _ = trainingEnv.step(self.chooseAction(trainingEnv.state))
+            if interactiveDisplayManager:
+                trainingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, render the trading environment backtested
         if rendering:
-            trainingEnv.render()
+            trainingEnv.render(displayOptions=rendering, extraText="Training")
         
         # If required, plot the training results
         if plotTraining:
-            self.plotTraining(results, bounds, step, trainingEnv.marketSymbol)
+            self.plotTraining(results, bounds, step, trainingEnv.marketSymbol, displayOption=plotTraining)
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
-            analyser.displayPerformance('MAMR')
+            analyser.displayPerformance('MAMR (Training)')
 
         # Return the trading environment backtested (training set)
         return trainingEnv
 
 
-    def testing(self, trainingEnv, testingEnv, rendering=False, showPerformance=False):
+    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
         GOAL: Test the trading strategy on another unknown trading
               environment (called testing set) in order to evaluate
@@ -824,27 +878,30 @@ class MovingAveragesMR(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
         done = 0
         while done == 0:
             _, _, done, _ = testingEnv.step(self.chooseAction(testingEnv.state))
+            if interactiveDisplayManager:
+                testingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, render the trading environment backtested
         if rendering:
-            testingEnv.render()
+            testingEnv.render(displayOptions=rendering, extraText="Testing")
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
-            analyser.displayPerformance('MAMR')
+            analyser.displayPerformance('MAMR (Testing)')
 
         # Return the trading environment backtested (testing set)
         return testingEnv
 
 
-    def plotTraining(self, results, bounds, step, marketSymbol):
+    def plotTraining(self, results, bounds, step, marketSymbol, displayOption=DisplayOption()):
         """
         GOAL: Plot both 2D and 3D graphs illustrating the results of the entire
               training phase set of simulations, depicting the performance
@@ -864,8 +921,8 @@ class MovingAveragesMR(tradingStrategy):
         xx, yy = np.meshgrid(x, y, sparse=True)
 
         # Initialization of the 3D figure
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111, projection='3d')
+        displayManager1 = DisplayManager(displayOptions=displayOption)
+        ax = displayManager1.add_subplot(111, projection='3d')
         ax.set_xlabel('Long Window Duration')
         ax.set_ylabel('Short Window Duration')
         ax.set_zlabel('Sharpe Ratio')
@@ -874,11 +931,12 @@ class MovingAveragesMR(tradingStrategy):
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
         plt.savefig(''.join(['Figures/', str(marketSymbol), '_MAMROptimization3D', '.png']))
+        displayManager1.show(f"{str(marketSymbol)}_MAMROptimization3D_Training")
         #plt.show()
 
         # Plot the same information as a 2D graph
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111,
+        displayManager2 = DisplayManager(displayOptions=displayOption)
+        ax = displayManager2.add_subplot(111,
                              ylabel='Short Window Duration',
                              xlabel='Long Window Duration')
         graph = ax.imshow(results,
@@ -886,6 +944,6 @@ class MovingAveragesMR(tradingStrategy):
                           extent=(bounds[0], bounds[1], bounds[1], bounds[0]))
         plt.colorbar(graph)
         plt.gca().invert_yaxis()
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MAMROptimization2D', '.png']))
+        displayManager2.show(f"{str(marketSymbol)}_MAMROptimization2D_Training")
         #plt.show()
         

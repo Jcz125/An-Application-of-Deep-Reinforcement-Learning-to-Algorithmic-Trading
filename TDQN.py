@@ -620,7 +620,8 @@ class TDQN:
             self.policyNetwork.eval()
 
 
-    def training(self, trainingEnv, trainingParameters=[],
+    def training(self, trainingEnv, 
+                 trainingParameters=[],
                  verbose=False, 
                  rendering=DisplayOption(), 
                  plotTraining=DisplayOption(), 
@@ -864,7 +865,7 @@ class TDQN:
         displayManager = DisplayManager(displayOptions=displayOption)
         ax1 = displayManager.add_subplot(111, ylabel='Total reward collected', xlabel='Episode')
         ax1.plot(score)
-        displayManager.show(f"{str(marketSymbol)} TrainingResults")
+        displayManager.show(f"{str(marketSymbol)}_Training_Results")
 
     
     def plotQValues(self, QValues0, QValues1, marketSymbol, displayOption=DisplayOption(), extraTest=""):
@@ -882,7 +883,7 @@ class TDQN:
         ax1.plot(QValues0)
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
-        displayManager.show(f"{str(marketSymbol)}_{extraTest}QValues")
+        displayManager.show(f"{str(marketSymbol)}_{extraTest}_QValues")
 
 
     def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, 
@@ -1030,7 +1031,7 @@ class TDQN:
             ax.plot([performanceTrain[e][i] for e in range(trainingParameters[0])])
             ax.plot([performanceTest[e][i] for e in range(trainingParameters[0])])
             ax.legend(["Training", "Testing"])
-            displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance_{str(i+1)}")
+            displayManager.show(f"{str(marketSymbol)}_Training_Testing_Performance_{str(i+1)}")
 
         # Plot the expected performance of the intelligent DRL trading agent
         displayManager = DisplayManager(displayOptions=trainingTestingExpectedPerformanceDisplayOption)
@@ -1040,7 +1041,7 @@ class TDQN:
         ax.fill_between(range(len(expectedPerformanceTrain)), expectedPerformanceTrain-stdPerformanceTrain, expectedPerformanceTrain+stdPerformanceTrain, alpha=0.25)
         ax.fill_between(range(len(expectedPerformanceTest)), expectedPerformanceTest-stdPerformanceTest, expectedPerformanceTest+stdPerformanceTest, alpha=0.25)
         ax.legend(["Training", "Testing"])
-        displayManager.show(f"{str(marketSymbol)}_TrainingTestingExpectedPerformance")
+        displayManager.show(f"{str(marketSymbol)}_Training_Testing_Expected_Performance")
 
         # Closing of the tensorboard writer
         self.writer.close()

@@ -378,18 +378,20 @@ class TradingSimulator:
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, observationSpace, actionSpace, bounds, step, numberOfEpisodes)
         # 2. TRAINING PHASE
         # Initialize the trading environment associated with the training phase
+        print("=================================== TRAINING PHASE ===================================")
         trainingEnv = TradingEnv(stock, startingDate, splitingDate, money, stateLength, transactionCosts)
         # Training of the trading strategy
         trainingEnv = tradingStrategy.training(trainingEnv, 
                                                trainingParameters=trainingParameters,
-                                               verbose=False, 
+                                               verbose=True, 
                                                rendering=DisplayOption(False, plotTrainEnv, False),
                                                plotTraining=DisplayOption(False, trainPlot, False), 
                                                showPerformance=trainShowPerformance,
                                                interactiveTradingGraph=interactiveTrain)
-        print("=================================== TESTING ===================================")
+        
         # 3. TESTING PHASE
         # Initialize the trading environment associated with the testing phase
+        print("=================================== TESTING PHASE ===================================")
         testingEnv = TradingEnv(stock, splitingDate, endingDate, money, stateLength, transactionCosts, liveData=testOnLiveData)
         # Testing of the trading strategy
         testingEnv = tradingStrategy.testing(trainingEnv,
