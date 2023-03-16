@@ -653,7 +653,8 @@ class TDQN:
         # Apply data augmentation techniques to improve the training set
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True, rendering.recordVideo), 
+                                                   figsize=default_fig_size) if interactiveTradingGraph or rendering.recordVideo else None
 
         # Initialization of some variables tracking the training and testing performances
         if plotTraining:
@@ -765,6 +766,7 @@ class TDQN:
 
         # If required, show the rendering of the trading environment
         if rendering:
+            rendering.recordVideo = False
             trainingEnv.render(displayOptions=rendering, extraText="Training")
 
         # If required, plot the training results
@@ -815,7 +817,8 @@ class TDQN:
         QValues0 = []
         QValues1 = []
         done = 0
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True, rendering.recordVideo), 
+                                                   figsize=default_fig_size) if interactiveTradingGraph or rendering.recordVideo else None
 
         # Interact with the environment until the episode termination
         while done == 0:
@@ -840,6 +843,7 @@ class TDQN:
 
         # If required, show the rendering of the trading environment
         if rendering:
+            rendering.recordVideo = False
             if (not interactiveDisplayManager):
                 testingEnv.render(rendering, extraText="Testing")
             self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraTest="Testing")

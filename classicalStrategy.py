@@ -178,7 +178,7 @@ class BuyAndHold(tradingStrategy):
         
         OUTPUTS: - trainingEnv: Trading environment backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         trainingEnv.reset()
@@ -223,7 +223,7 @@ class BuyAndHold(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
@@ -311,7 +311,7 @@ class SellAndHold(tradingStrategy):
         
         OUTPUTS: - trainingEnv: Trading environment backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         trainingEnv.reset()
@@ -356,7 +356,7 @@ class SellAndHold(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
@@ -494,7 +494,7 @@ class MovingAveragesTF(tradingStrategy):
         OUTPUTS: - trainingEnv: Trading environment associated with the best
                                 trading strategy parameters backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
         # Compute the dimension of the parameter search space
         bounds = trainingParameters[0]
         step = trainingParameters[1]
@@ -594,7 +594,7 @@ class MovingAveragesTF(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
         
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()
@@ -778,7 +778,7 @@ class MovingAveragesMR(tradingStrategy):
         OUTPUTS: - trainingEnv: Trading environment associated with the best
                                 trading strategy parameters backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
         # Compute the dimension of the parameter search space
         bounds = trainingParameters[0]
         step = trainingParameters[1]
@@ -878,7 +878,7 @@ class MovingAveragesMR(tradingStrategy):
         
         OUTPUTS: - testingEnv: Trading environment backtested.
         """
-        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=(20.0, 12.0)) if interactiveTradingGraph else None
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True), figsize=default_fig_size) if interactiveTradingGraph else None
 
         # Execution of the trading strategy on the trading environment
         testingEnv.reset()

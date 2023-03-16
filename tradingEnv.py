@@ -411,28 +411,28 @@ class TradingEnv(gym.Env):
         displayManager.plot(ax1, 0, timestamps, self.data['Close'][:self.t].to_numpy(), color='blue', lw=1)
         displayManager.plot(ax1, 1, self.data.loc[self.data['Action'] == 1.0].index, 
                             self.data['Close'][self.data['Action'] == 1.0],
-                            marker='^', markersize=5, color='green')   
+                            linestyle='None', marker='^', markersize=5, color='green')   
         displayManager.plot(ax1, 2, self.data.loc[self.data['Action'] == -1.0].index, 
                             self.data['Close'][self.data['Action'] == -1.0],
-                            marker='v', markersize=5, color='red')
+                            linestyle='None', marker='v', markersize=5, color='red')
         
         # Plot the second graph -> Evolution of the trading capital
         displayManager.plot(ax2, 0, timestamps, self.data['Money'][:self.t].to_numpy(), color='blue', lw=1)
         displayManager.plot(ax2, 1, self.data.loc[self.data['Action'] == 1.0].index, 
                             self.data['Money'][self.data['Action'] == 1.0],
-                            marker='^', markersize=5, color='green')   
+                            linestyle='None', marker='^', markersize=5, color='green')   
         displayManager.plot(ax2, 2, self.data.loc[self.data['Action'] == -1.0].index, 
                             self.data['Money'][self.data['Action'] == -1.0],
-                           marker= 'v', markersize=5, color='red')
+                            linestyle='None', marker= 'v', markersize=5, color='red')
         
         # Plot the third graph -> Evolution of the liquid assets
         displayManager.plot(ax3, 0, timestamps, self.data['Cash'][:self.t].to_numpy(), color='blue', lw=1)
         displayManager.plot(ax3, 1, self.data.loc[self.data['Action'] == 1.0].index, 
                             self.data['Cash'][self.data['Action'] == 1.0],
-                            marker='^', markersize=5, color='green')   
+                            linestyle='None', marker='^', markersize=5, color='green')   
         displayManager.plot(ax3, 2, self.data.loc[self.data['Action'] == -1.0].index, 
                             self.data['Cash'][self.data['Action'] == -1.0],
-                            marker='v', markersize=5, color='red')
+                            linestyle='None', marker='v', markersize=5, color='red')
         
         # Generation of the two legends and plotting
         ax1.legend(["Price", "Long",  "Short"])
