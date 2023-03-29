@@ -15,8 +15,6 @@ import pandas as pd
 from scipy import signal
 from dataDownloader import YahooFinance
 
-
-
 ###############################################################################
 ################################ Global variables #############################
 ###############################################################################
@@ -25,7 +23,6 @@ from dataDownloader import YahooFinance
 MIN = 100
 MAX = 200
 PERIOD = 252
-
 
 
 ###############################################################################
@@ -45,7 +42,7 @@ class StockGenerator:
              - triangle: Generate a (periodic) triangle signal curve.
     """
 
-    def linearUp (self, startingDate, endingDate, minValue=MIN, maxValue=MAX):
+    def linearUp(self, startingDate, endingDate, minValue=MIN, maxValue=MAX):
         """
         GOAL: Generate a new fictive stock market as a continuously increasing
               linear curve.
@@ -69,15 +66,14 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         linearUpward['Open'] = prices
-        linearUpward['High'] = prices 
+        linearUpward['High'] = prices
         linearUpward['Low'] = prices
-        linearUpward['Close'] = prices 
+        linearUpward['Close'] = prices
         linearUpward['Volume'] = 100000
 
         return linearUpward
 
-    
-    def linearDown (self, startingDate, endingDate, minValue=MIN, maxValue=MAX):
+    def linearDown(self, startingDate, endingDate, minValue=MIN, maxValue=MAX):
         """
         GOAL: Generate a new fictive stock market as a continuously decreasing
               linear curve.
@@ -102,14 +98,13 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         linearDownward['Open'] = prices
-        linearDownward['High'] = prices 
+        linearDownward['High'] = prices
         linearDownward['Low'] = prices
-        linearDownward['Close'] = prices 
+        linearDownward['Close'] = prices
         linearDownward['Volume'] = 100000
 
         return linearDownward
 
-    
     def sinusoidal(self, startingDate, endingDate, minValue=MIN, maxValue=MAX, period=PERIOD):
         """
         GOAL: Generate a new fictive stock market as a sinusoidal signal curve.
@@ -135,14 +130,13 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         sinusoidal['Open'] = prices
-        sinusoidal['High'] = prices 
+        sinusoidal['High'] = prices
         sinusoidal['Low'] = prices
-        sinusoidal['Close'] = prices 
+        sinusoidal['Close'] = prices
         sinusoidal['Volume'] = 100000
 
         return sinusoidal
 
-    
     def triangle(self, startingDate, endingDate, minValue=MIN, maxValue=MAX, period=PERIOD):
         """
         GOAL: Generate a new fictive stock market as a triangle signal curve.
@@ -168,10 +162,9 @@ class StockGenerator:
 
         # Filling of the new fictive stock market dataframe
         triangle['Open'] = prices
-        triangle['High'] = prices 
+        triangle['High'] = prices
         triangle['Low'] = prices
-        triangle['Close'] = prices 
+        triangle['Close'] = prices
         triangle['Volume'] = 100000
 
         return triangle
-        

@@ -1,8 +1,5 @@
-# An Application of Deep Reinforcement Learning to Algorithmic Trading
-Experimental code supporting the results presented in the scientific research paper:
-> Thibaut Théate and Damien Ernst. "An Application of Deep Reinforcement Learning to Algorithmic Trading." (2020).
-> [[arxiv]](https://arxiv.org/abs/2004.06627)
-
+# Proximal Policy Optimization applied to Algorithmic Trading
+Project based on the framework developed by T. Théate and D. Ernst, modified to implement a PPO.
 
 
 # Dependencies
@@ -35,7 +32,7 @@ python main.py -strategy STRATEGY -stock STOCK
 ```
 
 with:
-* STRATEGY being the name of the trading strategy (by default TDQN),
+* STRATEGY being the name of the trading strategy (by default PPO),
 * STOCK being the name of the stock (by default Apple).
 
 The performance of this algorithmic trading policy will be automatically displayed in the terminal, and some graphs will be generated and stored in the folder named "Figures".
@@ -44,12 +41,6 @@ The performance of this algorithmic trading policy will be automatically display
 
 # Citation
 
-If you make use of this experimental code, please cite the associated research paper:
-
-```
-@inproceedings{Theate2020,
-  title={An Aplication of Deep Reinforcement Learning to Algorithmic Trading},
-  author={Theate, Thibaut and Ernst, Damien},
-  year={2020}
-}
-```
+Experimental code supporting the results presented in the scientific research paper:
+> Thibaut Théate and Damien Ernst. "An Application of Deep Reinforcement Learning to Algorithmic Trading." (2020).
+> [[arxiv]](https://arxiv.org/abs/2004.06627)

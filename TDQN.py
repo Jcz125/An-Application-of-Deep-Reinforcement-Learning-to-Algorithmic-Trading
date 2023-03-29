@@ -77,10 +77,10 @@ L2Factor = 0.000001
 GPUNumber = 0
 
 
-
 ###############################################################################
 ############################### Class ReplayMemory ############################
 ###############################################################################
+
 
 class ReplayMemory:
     """
@@ -109,6 +109,9 @@ class ReplayMemory:
 
         self.memory = deque(maxlen=capacity)
     
+    
+
+
 
     def push(self, state, action, reward, nextState, done):
         """
@@ -127,7 +130,6 @@ class ReplayMemory:
 
         self.memory.append((state, action, reward, nextState, done))
 
-
     def sample(self, batchSize):
         """
         GOAL: Sample a batch of experiences from the replay memory.
@@ -144,7 +146,6 @@ class ReplayMemory:
         state, action, reward, nextState, done = zip(*random.sample(self.memory, batchSize))
         return state, action, reward, nextState, done
 
-
     def __len__(self):
         """
         GOAL: Return the capicity of the replay memory, which is the maximum number of
@@ -156,7 +157,6 @@ class ReplayMemory:
         """
 
         return len(self.memory)
-
 
     def reset(self):
         """
@@ -170,11 +170,10 @@ class ReplayMemory:
         self.memory = deque(maxlen=capacity)
 
 
-
-
 ###############################################################################
 ################################### Class DQN #################################
 ###############################################################################
+
 
 class DQN(nn.Module):
     """
@@ -241,7 +240,6 @@ class DQN(nn.Module):
         torch.nn.init.xavier_uniform_(self.fc4.weight)
         torch.nn.init.xavier_uniform_(self.fc5.weight)
 
-    
     def forward(self, input):
         """
         GOAL: Implementing the forward pass of the Deep Neural Network.
@@ -313,7 +311,7 @@ class TDQN:
                                      (Epsilon-Greedy exploration technique).        
     """
 
-    def __init__(self, observationSpace, actionSpace, numberOfNeurons=numberOfNeurons, dropout=dropout, 
+    def __init__(self, observationSpace, actionSpace, numberOfNeurons=numberOfNeurons, dropout=dropout,
                  gamma=gamma, learningRate=learningRate, targetNetworkUpdate=targetNetworkUpdate,
                  epsilonStart=epsilonStart, epsilonEnd=epsilonEnd, epsilonDecay=epsilonDecay,
                  capacity=capacity, batchSize=batchSize):
@@ -345,7 +343,7 @@ class TDQN:
         random.seed(0)
 
         # Check availability of CUDA for the hardware (CPU or GPU)
-        self.device = torch.device('cuda:'+str(GPUNumber) if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:' + str(GPUNumber) if torch.cuda.is_available() else 'cpu')
 
         # Set the general parameters of the DQN algorithm
         self.gamma = gamma
@@ -372,15 +370,15 @@ class TDQN:
         self.optimizer = optim.Adam(self.policyNetwork.parameters(), lr=learningRate, weight_decay=L2Factor)
 
         # Set the Epsilon-Greedy exploration technique
-        self.epsilonValue = lambda iteration: epsilonEnd + (epsilonStart - epsilonEnd) * math.exp(-1 * iteration / epsilonDecay)
-        
+        self.epsilonValue = lambda iteration: epsilonEnd + (epsilonStart - epsilonEnd) * math.exp(
+            -1 * iteration / epsilonDecay)
+
         # Initialization of the iterations counter
         self.iterations = 0
 
         # Initialization of the tensorboard writer
-        self.writer = SummaryWriter('runs/' + datetime.datetime.now().strftime("%d/%m/%Y-%H.%M.%S"))
+        self.writer = SummaryWriter('runs/' + datetime.datetime.now().strftime("%d/%m/%Y-%H:%M:%S"))
 
-    
     def getNormalizationCoefficients(self, tradingEnv):
         """
         GOAL: Retrieve the coefficients required for the normalization
@@ -402,22 +400,21 @@ class TDQN:
         coefficients = []
         margin = 1
         # 1. Close price => returns (absolute) => maximum value (absolute)
-        returns = [abs((closePrices[i]-closePrices[i-1])/closePrices[i-1]) for i in range(1, len(closePrices))]
-        coeffs = (0, np.max(returns)*margin)
+        returns = [abs((closePrices[i] - closePrices[i - 1]) / closePrices[i - 1]) for i in range(1, len(closePrices))]
+        coeffs = (0, np.max(returns) * margin)
         coefficients.append(coeffs)
         # 2. Low/High prices => Delta prices => maximum value
-        deltaPrice = [abs(highPrices[i]-lowPrices[i]) for i in range(len(lowPrices))]
-        coeffs = (0, np.max(deltaPrice)*margin)
+        deltaPrice = [abs(highPrices[i] - lowPrices[i]) for i in range(len(lowPrices))]
+        coeffs = (0, np.max(deltaPrice) * margin)
         coefficients.append(coeffs)
         # 3. Close/Low/High prices => Close price position => no normalization required
         coeffs = (0, 1)
         coefficients.append(coeffs)
         # 4. Volumes => minimum and maximum values
-        coeffs = (np.min(volumes)/margin, np.max(volumes)*margin)
+        coeffs = (np.min(volumes) / margin, np.max(volumes) * margin)
         coefficients.append(coeffs)
-        
-        return coefficients
 
+        return coefficients
 
     def processState(self, state, coefficients):
         """
@@ -436,43 +433,43 @@ class TDQN:
         volumes = [state[3][i] for i in range(len(state[3]))]
 
         # 1. Close price => returns => MinMax normalization
-        returns = [(closePrices[i]-closePrices[i-1])/closePrices[i-1] for i in range(1, len(closePrices))]
+        returns = [(closePrices[i] - closePrices[i - 1]) / closePrices[i - 1] for i in range(1, len(closePrices))]
         if coefficients[0][0] != coefficients[0][1]:
-            state[0] = [((x - coefficients[0][0])/(coefficients[0][1] - coefficients[0][0])) for x in returns]
+            state[0] = [((x - coefficients[0][0]) / (coefficients[0][1] - coefficients[0][0])) for x in returns]
         else:
             state[0] = [0 for x in returns]
         # 2. Low/High prices => Delta prices => MinMax normalization
-        deltaPrice = [abs(highPrices[i]-lowPrices[i]) for i in range(1, len(lowPrices))]
+        deltaPrice = [abs(highPrices[i] - lowPrices[i]) for i in range(1, len(lowPrices))]
         if coefficients[1][0] != coefficients[1][1]:
-            state[1] = [((x - coefficients[1][0])/(coefficients[1][1] - coefficients[1][0])) for x in deltaPrice]
+            state[1] = [((x - coefficients[1][0]) / (coefficients[1][1] - coefficients[1][0])) for x in deltaPrice]
         else:
             state[1] = [0 for x in deltaPrice]
         # 3. Close/Low/High prices => Close price position => No normalization required
         closePricePosition = []
         for i in range(1, len(closePrices)):
-            deltaPrice = abs(highPrices[i]-lowPrices[i])
+            deltaPrice = abs(highPrices[i] - lowPrices[i])
             if deltaPrice != 0:
-                item = abs(closePrices[i]-lowPrices[i])/deltaPrice
+                item = abs(closePrices[i] - lowPrices[i]) / deltaPrice
             else:
                 item = 0.5
             closePricePosition.append(item)
         if coefficients[2][0] != coefficients[2][1]:
-            state[2] = [((x - coefficients[2][0])/(coefficients[2][1] - coefficients[2][0])) for x in closePricePosition]
+            state[2] = [((x - coefficients[2][0]) / (coefficients[2][1] - coefficients[2][0])) for x in
+                        closePricePosition]
         else:
             state[2] = [0.5 for x in closePricePosition]
         # 4. Volumes => MinMax normalization
         volumes = [volumes[i] for i in range(1, len(volumes))]
         if coefficients[3][0] != coefficients[3][1]:
-            state[3] = [((x - coefficients[3][0])/(coefficients[3][1] - coefficients[3][0])) for x in volumes]
+            state[3] = [((x - coefficients[3][0]) / (coefficients[3][1] - coefficients[3][0])) for x in volumes]
         else:
             state[3] = [0 for x in volumes]
-        
+
         # Process the state structure to obtain the appropriate format
         state = [item for sublist in state for item in sublist]
 
         return state
 
-    
     def processReward(self, reward):
         """
         GOAL: Process the RL reward returned by the environment by clipping
@@ -486,6 +483,9 @@ class TDQN:
 
         return np.clip(reward, -rewardClipping, rewardClipping)
  
+ 
+
+
 
     def updateTargetNetwork(self):
         """
@@ -499,10 +499,9 @@ class TDQN:
         """
 
         # Check if an update is required (update frequency)
-        if(self.iterations % targetNetworkUpdate == 0):
+        if (self.iterations % targetNetworkUpdate == 0):
             # Transfer the DNN parameters (policy network -> target network)
             self.targetNetwork.load_state_dict(self.policyNetwork.state_dict())
-
 
     def chooseAction(self, state):
         """
@@ -527,7 +526,6 @@ class TDQN:
             QValues = QValues.cpu().numpy()
             return action, Q, QValues
 
-    
     def chooseActionEpsilonGreedy(self, state, previousAction):
         """
         GOAL: Choose a valid RL action from the action space according to the
@@ -544,9 +542,9 @@ class TDQN:
         """
 
         # EXPLOITATION -> RL policy
-        if(random.random() > self.epsilonValue(self.iterations)):
+        if (random.random() > self.epsilonValue(self.iterations)):
             # Sticky action (RL generalization mechanism)
-            if(random.random() > alpha):
+            if (random.random() > alpha):
                 action, Q, QValues = self.chooseAction(state)
             else:
                 action = previousAction
@@ -558,13 +556,12 @@ class TDQN:
             action = random.randrange(self.actionSpace)
             Q = 0
             QValues = [0, 0]
-        
+
         # Increment the iterations counter (for Epsilon Greedy)
         self.iterations += 1
 
         return action, Q, QValues
     
-
     def learning(self, batchSize=batchSize):
         """
         GOAL: Sample a batch of past experiences and learn from it
@@ -574,10 +571,9 @@ class TDQN:
         
         OUTPUTS: /
         """
-        
+
         # Check that the replay memory is filled enough
         if (len(self.replayMemory) >= batchSize):
-
             # Set the Deep Neural Network in training mode
             self.policyNetwork.train()
 
@@ -619,7 +615,6 @@ class TDQN:
             # Set back the Deep Neural Network in evaluation mode
             self.policyNetwork.eval()
 
-
     def training(self, trainingEnv, 
                  trainingParameters=[],
                  verbose=False, 
@@ -649,7 +644,7 @@ class TDQN:
         return trainingEnv
         """
         verbose = verbose and not interactiveTradingGraph
-        
+
         # Apply data augmentation techniques to improve the training set
         dataAugmentation = DataAugmentation()
         trainingEnvList = dataAugmentation.generate(trainingEnv)
@@ -677,11 +672,11 @@ class TDQN:
                 print("Training progression (hardware selected => " + str(self.device) + "):")
 
             # Training phase for the number of episodes specified as parameter
-            for episode in tqdm(range(trainingParameters[0]), disable=not(verbose)):
+            for episode in tqdm(range(trainingParameters[0]), disable=not (verbose)):
 
                 # For each episode, train on the entire set of training environments
                 for i in range(len(trainingEnvList)):
-                    
+
                     # Set the initial RL variables
                     coefficients = self.getNormalizationCoefficients(trainingEnvList[i])
                     trainingEnvList[i].reset()
@@ -698,13 +693,12 @@ class TDQN:
 
                     # Interact with the training environment until termination
                     while done == 0:
-
                         # Choose an action according to the RL policy and the current RL state
                         action, _, _ = self.chooseActionEpsilonGreedy(state, previousAction)
-                        
+
                         # Interact with the environment with the chosen action
                         nextState, reward, done, info = trainingEnvList[i].step(action)
-                        
+
                         # Process the RL variables retrieved and insert this new experience into the Experience Replay memory
                         reward = self.processReward(reward)
                         nextState = self.processState(nextState, coefficients)
@@ -737,7 +731,7 @@ class TDQN:
                     # Store the current training results
                     if plotTraining:
                         score[i][episode] = totalReward
-                
+
                 # Compute the current performance on both the training and testing sets
                 if plotTraining:
                     # Training set performance
@@ -754,7 +748,7 @@ class TDQN:
                     performanceTest.append(performance)
                     self.writer.add_scalar('Testing performance (Sharpe Ratio)', performance, episode)
                     testingEnv.reset()
-        
+
         except KeyboardInterrupt:
             print()
             print("WARNING: Training prematurely interrupted...")
@@ -784,12 +778,10 @@ class TDQN:
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
             analyser.displayPerformance('TDQN (Training)')
-        
+
         # Closing of the tensorboard writer
         self.writer.close()
-        
         return trainingEnv
-
 
     def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
         """
@@ -822,14 +814,13 @@ class TDQN:
 
         # Interact with the environment until the episode termination
         while done == 0:
-
             # Choose an action according to the RL policy and the current RL state
             action, _, QValues = self.chooseAction(state)
-                
+
             # Interact with the environment with the chosen action
             nextState, _, done, _ = testingEnvSmoothed.step(action)
             testingEnv.step(action)
-                
+
             # Update the new state
             state = self.processState(nextState, coefficients)
 
@@ -843,18 +834,14 @@ class TDQN:
 
         # If required, show the rendering of the trading environment
         if rendering:
-            rendering.recordVideo = False
-            if (not interactiveDisplayManager):
-                testingEnv.render(rendering, extraText="Testing")
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraTest="Testing")
+            testingEnv.render()
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol)
 
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
             analyser.displayPerformance('TDQN (Testing)')
-        
         return testingEnv
-
 
     def plotTraining(self, score, marketSymbol, displayOption=DisplayOption()):
         """
@@ -871,7 +858,6 @@ class TDQN:
         ax1.plot(score)
         displayManager.show(f"{str(marketSymbol)}_Training_Results")
 
-    
     def plotQValues(self, QValues0, QValues1, marketSymbol, displayOption=DisplayOption(), extraTest=""):
         """
         Plot sequentially the Q values related to both actions.
@@ -888,7 +874,6 @@ class TDQN:
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
         displayManager.show(f"{str(marketSymbol)}_{extraTest}_QValues")
-
 
     def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, 
                                 trainingTestingPerformanceDisplayOption=DisplayOption(),
@@ -1049,10 +1034,8 @@ class TDQN:
 
         # Closing of the tensorboard writer
         self.writer.close()
-
         return trainingEnv
 
-        
     def saveModel(self, fileName):
         """
         GOAL: Save the RL policy, which is the policy Deep Neural Network.
@@ -1061,9 +1044,7 @@ class TDQN:
         
         OUTPUTS: /
         """
-
         torch.save(self.policyNetwork.state_dict(), fileName)
-
 
     def loadModel(self, fileName):
         """
@@ -1073,10 +1054,8 @@ class TDQN:
         
         OUTPUTS: /
         """
-
         self.policyNetwork.load_state_dict(torch.load(fileName, map_location=self.device))
         self.targetNetwork.load_state_dict(self.policyNetwork.state_dict())
-
 
     def plotEpsilonAnnealing(self, displayOption=DisplayOption()):
         """

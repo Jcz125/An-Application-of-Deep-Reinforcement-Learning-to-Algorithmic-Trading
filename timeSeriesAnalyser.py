@@ -18,7 +18,6 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from matplotlib import pyplot as plt
 
 
-
 ###############################################################################
 ############################## TimeSeriesAnalyser #############################
 ###############################################################################
@@ -47,7 +46,6 @@ class TimeSeriesAnalyser:
         """
         self.timeSeries = timeSeries
 
-
     def plotTimeSeries(self):
         """
         GOAL: Draw a relevant plot of the time series to analyse.
@@ -65,7 +63,6 @@ class TimeSeriesAnalyser:
         plt.ylabel("Price")
         plt.show()
 
-    
     def timeSeriesDecomposition(self, model='multiplicative'):
         """
         GOAL: Decompose the time series into its different components
@@ -80,10 +77,9 @@ class TimeSeriesAnalyser:
         # period=5 because there are 5 trading days in a week, and the decomposition looks for weekly seasonality
         # period=21 should be used for monthly seasonality and period=252 for yearly seasonality
         decomposition = seasonal_decompose(self.timeSeries, model=model, period=5, extrapolate_trend='freq')
-        plt.rcParams.update({'figure.figsize': (16,9)})
+        plt.rcParams.update({'figure.figsize': (16, 9)})
         decomposition.plot()
         plt.show()
-
 
     def stationarityAnalysis(self):
         """
@@ -107,7 +103,6 @@ class TimeSeriesAnalyser:
         else:
             print("The ADF test could not affirm whether or not the time series is stationary...")
 
-
     def cyclicityAnalysis(self):
         """
         GOAL: Assess whether or not the time series presents a significant
@@ -119,7 +114,7 @@ class TimeSeriesAnalyser:
         """
 
         # Generation of an Autoacorrelation function plot
-        plt.rcParams.update({'figure.figsize': (16,9)})
+        plt.rcParams.update({'figure.figsize': (16, 9)})
         pd.plotting.autocorrelation_plot(self.timeSeries)
         plt.show()
 
@@ -132,7 +127,6 @@ class TimeSeriesAnalyser:
         # Generation of several lag plots
         _, axes = plt.subplots(1, 10, figsize=(17, 9), sharex=True, sharey=True)
         for i, ax in enumerate(axes.flatten()[:10]):
-            pd.plotting.lag_plot(self.timeSeries, lag=i+1, ax=ax)
-            ax.set_title('Lag ' + str(i+1))
+            pd.plotting.lag_plot(self.timeSeries, lag=i + 1, ax=ax)
+            ax.set_title('Lag ' + str(i + 1))
         plt.show()
-        

@@ -2,7 +2,6 @@
 numpy
 scipy
 matplotlib
-ipympl
 pandas
 seaborn
 statsmodels
@@ -11,17 +10,9 @@ requests
 tqdm
 tabulate
 
-# Finance
-yahoo_fin
-alpha_vantage
-yfinance
-stockstats # for technical indicators
-
 # Deep Learning framework
 torch
 tensorboard
 
-# RL
 # OpenAI Gym RL framework
 gym
-stable-baselines3[extra]

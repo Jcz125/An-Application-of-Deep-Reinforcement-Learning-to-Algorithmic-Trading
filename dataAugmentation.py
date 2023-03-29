@@ -15,8 +15,6 @@ import numpy as np
 
 from tradingEnv import TradingEnv
 
-
-
 ###############################################################################
 ################################ Global variables #############################
 ###############################################################################
@@ -26,7 +24,6 @@ shiftRange = [0]
 stretchRange = [1]
 filterRange = [5]
 noiseRange = [0]
-
 
 
 ###############################################################################
@@ -51,7 +48,7 @@ class DataAugmentation:
                 - generate: Generate a set of new trading environments based on the
                             data augmentation techniques implemented.       
     """
-    
+
     def shiftTimeSeries(self, tradingEnv, shiftMagnitude=0):
         """
         GOAL: Generate a new trading environment by simply shifting up or down
@@ -70,13 +67,12 @@ class DataAugmentation:
         if shiftMagnitude < 0:
             minValue = np.min(tradingEnv.data['Volume'])
             shiftMagnitude = max(-minValue, shiftMagnitude)
-        
+
         # Shifting of the volume time series
         newTradingEnv.data['Volume'] += shiftMagnitude
 
         # Return the new trading environment generated
         return newTradingEnv
-
 
     def streching(self, tradingEnv, factor=1):
         """
@@ -96,14 +92,15 @@ class DataAugmentation:
         # Application of the stretching/contraction operation
         returns = newTradingEnv.data['Close'].pct_change() * factor
         for i in range(1, len(newTradingEnv.data.index)):
-            newTradingEnv.data['Close'][i] = newTradingEnv.data['Close'][i-1] * (1 + returns[i])
-            newTradingEnv.data['Low'][i] = newTradingEnv.data['Close'][i] * tradingEnv.data['Low'][i]/tradingEnv.data['Close'][i]
-            newTradingEnv.data['High'][i] = newTradingEnv.data['Close'][i] * tradingEnv.data['High'][i]/tradingEnv.data['Close'][i]
-            newTradingEnv.data['Open'][i] = newTradingEnv.data['Close'][i-1]
+            newTradingEnv.data['Close'][i] = newTradingEnv.data['Close'][i - 1] * (1 + returns[i])
+            newTradingEnv.data['Low'][i] = newTradingEnv.data['Close'][i] * tradingEnv.data['Low'][i] / \
+                                           tradingEnv.data['Close'][i]
+            newTradingEnv.data['High'][i] = newTradingEnv.data['Close'][i] * tradingEnv.data['High'][i] / \
+                                            tradingEnv.data['Close'][i]
+            newTradingEnv.data['Open'][i] = newTradingEnv.data['Close'][i - 1]
 
         # Return the new trading environment generated
         return newTradingEnv
-
 
     def noiseAddition(self, tradingEnv, stdev=1):
         """
@@ -124,19 +121,18 @@ class DataAugmentation:
             # Generation of artificial gaussian random noises
             price = newTradingEnv.data['Close'][i]
             volume = newTradingEnv.data['Volume'][i]
-            priceNoise = np.random.normal(0, stdev*(price/100))
-            volumeNoise = np.random.normal(0, stdev*(volume/100))
+            priceNoise = np.random.normal(0, stdev * (price / 100))
+            volumeNoise = np.random.normal(0, stdev * (volume / 100))
 
             # Addition of the artificial noise generated
-            newTradingEnv.data['Close'][i] *= (1 + priceNoise/100)
-            newTradingEnv.data['Low'][i] *= (1 + priceNoise/100)
-            newTradingEnv.data['High'][i] *= (1 + priceNoise/100)
-            newTradingEnv.data['Volume'][i] *= (1 + volumeNoise/100)
-            newTradingEnv.data['Open'][i] = newTradingEnv.data['Close'][i-1]
+            newTradingEnv.data['Close'][i] *= (1 + priceNoise / 100)
+            newTradingEnv.data['Low'][i] *= (1 + priceNoise / 100)
+            newTradingEnv.data['High'][i] *= (1 + priceNoise / 100)
+            newTradingEnv.data['Volume'][i] *= (1 + volumeNoise / 100)
+            newTradingEnv.data['Open'][i] = newTradingEnv.data['Close'][i - 1]
 
         # Return the new trading environment generated
         return newTradingEnv
-
 
     def lowPassFilter(self, tradingEnv, order=5):
         """
@@ -168,7 +164,6 @@ class DataAugmentation:
         # Return the new trading environment generated
         return newTradingEnv
 
-
     def generate(self, tradingEnv):
         """
         Generate a set of new trading environments based on the data
@@ -191,4 +186,3 @@ class DataAugmentation:
                     for noise in noiseRange:
                         tradingEnvList.append(self.noiseAddition(tradingEnvFiltered, noise))
         return tradingEnvList
-    
