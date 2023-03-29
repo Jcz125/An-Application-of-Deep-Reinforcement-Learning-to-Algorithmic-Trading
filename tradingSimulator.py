@@ -244,7 +244,7 @@ class TradingSimulator:
                          transactionCosts=transactionCosts, interactiveTrain=False, trainShowPerformance=False, trainPlot=False, 
                          plotTrainEnv=False, interactiveTest=False, testShowPerformance=False, testOnLiveData=False, testPlotQValues=False):
         # 1. INIT PHASE
-        observationSpace = 1 + (stateLength-1)*4 if not observationSpace else observationSpace
+        observationSpace = 1 + (stateLength-1) * 4 if not observationSpace else observationSpace
         stock = self.getStock(stockName)
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, observationSpace, actionSpace, bounds, step, numberOfEpisodes)
 
