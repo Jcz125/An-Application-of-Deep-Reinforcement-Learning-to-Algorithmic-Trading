@@ -7,6 +7,10 @@ Authors: Alessandro Pavesi
 Institution: University of Bologna
 """
 
+###############################################################################
+################################### Imports ###################################
+###############################################################################
+
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
@@ -861,6 +865,9 @@ class PPO:
         QValues0 = []
         QValues1 = []
         done = 0
+        interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True, rendering.recordVideo), 
+                                                   figsize=default_fig_size) if interactiveTradingGraph or rendering.recordVideo else None
+
 
         # Interact with the environment until the episode termination
         while done == 0:
@@ -873,6 +880,9 @@ class PPO:
 
             # Update the new state
             state = self.processState(nextState, coefficients)
+
+            if interactiveDisplayManager:
+                testingEnv.render(_displayManager=interactiveDisplayManager)
 
         # If required, show the rendering of the trading environment
         if rendering:
