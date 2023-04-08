@@ -9,6 +9,7 @@ pandas-datareader
 requests
 tqdm
 tabulate
+PyYAML
 
 # Deep Learning framework
 torch
