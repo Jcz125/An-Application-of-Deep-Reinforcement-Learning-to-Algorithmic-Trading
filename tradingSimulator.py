@@ -96,7 +96,7 @@ class TradingSimulator:
         self.transactionCosts = self.percentageCosts[1] / 100
 
 
-    def getTradingStrategy(self, strategyName):
+    def getTradingStrategy(self, strategyName, **extraModelArgs):
         # Retrieve the trading strategy information
         if(strategyName in self.strategies):
             strategy = self.strategies[strategyName]
@@ -118,11 +118,11 @@ class TradingSimulator:
         if ai:
             strategyModule = importlib.import_module(f'DRL.{str(strategy)}')
             className = getattr(strategyModule, strategy)
-            tradingStrategy = className(self.observationSpace, self.actionSpace)
+            tradingStrategy = className(self.observationSpace, self.actionSpace, **extraModelArgs)
         else:
             strategyModule = importlib.import_module('Misc.classicalStrategy')
             className = getattr(strategyModule, strategy)
-            tradingStrategy = className()
+            tradingStrategy = className(**extraModelArgs)
         return tradingStrategy, trainingParameters
     
 
@@ -153,10 +153,11 @@ class TradingSimulator:
                             testOnLiveData=False, 
                             testPlotQValues=False,
                             trainTestRendering=False,
-                            saveStrategy=True):
+                            saveStrategy=True,
+                            **extraModelArgs):
         # 1. INIT PHASE
         stock = self.getStock(stockName)
-        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName)
+        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         # 2. TRAINING PHASE
         # Initialize the trading environment associated with the training phase
         print("=================================== TRAINING PHASE ===================================")
@@ -218,13 +219,14 @@ class TradingSimulator:
                                  testOnLiveData=False, 
                                  testPlotQValues=False,
                                  trainTestRendering=False,
-                                 saveStrategy=True):
+                                 saveStrategy=True,
+                                 **extraModelArgs):
         """
         GOAL: Simulate a new trading strategy on a list of stocks included in the
               testbench, with both learning and testing phases.
         """
         # 1. INIT PHASE
-        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName)
+        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         tradingStrategies, trainingEnvs, testingEnvs = [], [], []
 
         for stockName in stockNames:
@@ -287,7 +289,8 @@ class TradingSimulator:
                                  testShowPerformance=False, 
                                  testOnLiveData=False, 
                                  testPlotQValues=False,
-                                 trainTestRendering=False):
+                                 trainTestRendering=False,
+                                 **extraModelArgs):
         """
         GOAL: Simulate an already existing trading strategy on a certain
               stock of the testbench, the strategy being loaded from the
@@ -316,7 +319,7 @@ class TradingSimulator:
         """
         # 1. INIT PHASE
         stock = self.getStock(stockName)
-        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName)
+        tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         fileName = f"Strategies/{tradingStrategy.strategyName}_{stock}_{self.startingDate}_{self.splittingDate}.model"
         exists = os.path.isfile(fileName)
         # If affirmative, load the trading strategy

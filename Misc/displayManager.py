@@ -22,16 +22,18 @@ class DisplayOption:
 
 class DisplayManager:
     def __init__(self, displayOptions, **kwargs):
-        defaultKwargs = { 'figsize': default_fig_size }
-        kwargs = { **defaultKwargs, **kwargs }
-        plt.ion()
-        self.figure = plt.figure(**kwargs)
         self.displayOptions = displayOptions
-        self.subplots = {}
-        self.subplots_line_draw = {}
-        self.display = display.display(self.figure, display_id=True)
-        self.frames = []
-        self.title = ""
+        if displayOptions:
+            defaultKwargs = { 'figsize': default_fig_size }
+            kwargs = { **defaultKwargs, **kwargs }
+            plt.ion()
+            self.figure = plt.figure(**kwargs)
+            self.subplots = {}
+            self.subplots_line_draw = {}
+            self.display = display.display(self.figure, display_id=True)
+            self.frames = []
+            self.title = ""
+
 
     def __del__(self):
         if self.displayOptions.recordVideo:
@@ -45,28 +47,36 @@ class DisplayManager:
             # html = display.HTML(video)
             # display.display(html)
             self.figure.close()
-                
+
+       
     def figure(self):
         return self.figure
     
+
     def __bool__(self):
         return self.displayOptions.__bool__()
     
+
     def add_subplot(self, *args, **kwargs):
         ax = None
+        if not self.displayOptions:
+            return ax
         if args in self.subplots:
             ax = self.subplots[args]
         else:
             ax = self.figure.add_subplot(*args, **kwargs)
             self.subplots[args] = ax
             self.subplots_line_draw[ax] = {}
-        self.subplots[args].cla()
+        # self.subplots[args].cla()
         ax.grid(True, which='both')
         ax.set_autoscale_on(True)
         ax.autoscale_view(True, True, True)
         return ax
     
+
     def plot(self, ax, lineId, x, y, *args, **kwargs):
+        if not self.displayOptions:
+            return None
         if True or lineId not in self.subplots_line_draw[ax]:
             line, = ax.plot(x, y, *args, **kwargs)
             self.subplots_line_draw[ax][lineId] = line
@@ -76,6 +86,7 @@ class DisplayManager:
         if 'marker' in kwargs:
             line.set_marker(kwargs['marker'])
         return line
+
 
     def show(self, title):
         self.title = title
@@ -100,5 +111,5 @@ class DisplayManager:
             display.display(self.figure)
             plt.close()
         if self.displayOptions.saveToDisk:
-            plt.savefig(''.join(['Figures/', title, '.png']))
+            plt.savefig(f"Figures/{title}.png")
         

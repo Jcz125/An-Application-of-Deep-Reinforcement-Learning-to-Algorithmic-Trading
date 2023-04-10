@@ -97,7 +97,6 @@ class ReplayMemory:
                  - nextState: RL next states of the experience batch sampled.
                  - done: RL termination signals of the experience batch sampled.
         """
-        print(self.memory)
         state, action, reward, nextState, done = zip(*random.sample(self.memory, batchSize))
         return state, action, reward, nextState, done
 
@@ -123,6 +122,7 @@ class ReplayMemory:
         OUTPUTS: /
         """
         self.memory = deque(maxlen=self.capacity)
+
 
 ###############################################################################
 ############################## Class DQN BASE #################################
@@ -174,20 +174,16 @@ class TDQNBase(DRLAgent):
                  - QValues: Array of all the Qvalues outputted by the
                             Deep Neural Network.
         """
-
         # Choose the best action based on the RL policy
         with torch.no_grad():
             tensorState = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze(0)
-            QValues = self.policyNetwork(tensorState).squeeze(0)
+            QValues = self.policyNetwork(tensorState)
+            QValues = (QValues[0] if (isinstance(QValues, tuple)) else QValues).squeeze(0)
             Q, action = QValues.max(0)
             action = action.item()
             Q = Q.item()
             QValues = QValues.cpu().numpy()
             return action, Q, QValues
-
-
-    def processState(self, state, coefficients):
-        pass
 
 
     def learning(self, batchSize):

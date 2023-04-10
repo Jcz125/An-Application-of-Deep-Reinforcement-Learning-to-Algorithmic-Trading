@@ -295,7 +295,7 @@ class TDQN(TDQNBase):
             if verbose:
                 print("Training progression (hardware selected => " + str(self.device) + "):")
             # Training phase for the number of episodes specified as parameter
-            for episode in tqdm(range(trainingParameters[0]), disable=not (verbose)):
+            for episode in tqdm(range(trainingParameters[0]), disable=not(verbose)):
                 # For each episode, train on the entire set of training environments
                 for i in range(len(trainingEnvList)):
                     # Set the initial RL variables
@@ -310,8 +310,10 @@ class TDQN(TDQNBase):
                     # Set the performance tracking veriables
                     if plotTraining:
                         totalReward = 0
+                    number_interactions = 0
                     # Interact with the training environment until termination
                     while done == 0:
+                        number_interactions += 1
                         # Choose an action according to the RL policy and the current RL state
                         action, _, _ = self.chooseActionEpsilonGreedy(state, previousAction)
                         # Interact with the environment with the chosen action
@@ -366,10 +368,12 @@ class TDQN(TDQNBase):
 
         # Assess the algorithm performance on the training trading environment
         trainingEnv = self.testing(trainingEnv, trainingEnv)
+
         # If required, show the rendering of the trading environment
         if rendering:
             rendering.recordVideo = False
             trainingEnv.render(displayOptions=rendering, extraText="Training")
+        
         # If required, plot the training results
         if plotTraining:
             displayManager = DisplayManager(displayOptions=plotTraining)
@@ -380,10 +384,12 @@ class TDQN(TDQNBase):
             displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
                 self.plotTraining(score[i][:episode], marketSymbol, displayOption=plotTraining)
+        
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
             analyser.displayPerformance(f'{self.strategyName} (Training)')
+        
         # Closing of the tensorboard writer
         self.writer.close()
         return trainingEnv
@@ -415,6 +421,7 @@ class TDQN(TDQNBase):
         done = 0
         interactiveDisplayManager = DisplayManager(displayOptions=DisplayOption(False, False, True, rendering.recordVideo), 
                                                    figsize=default_fig_size) if interactiveTradingGraph or rendering.recordVideo else None
+
         # Interact with the environment until the episode termination
         while done == 0:
             # Choose an action according to the RL policy and the current RL state
@@ -429,11 +436,12 @@ class TDQN(TDQNBase):
             QValues1.append(QValues[1])
             if interactiveDisplayManager:
                 testingEnv.render(_displayManager=interactiveDisplayManager)
-
+        
         # If required, show the rendering of the trading environment
         if rendering:
-            testingEnv.render()
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol)
+            testingEnv.render(displayOptions=rendering)
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraText=self.strategyName)
+        
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)

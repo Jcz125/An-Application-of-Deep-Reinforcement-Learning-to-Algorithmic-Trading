@@ -133,7 +133,6 @@ class TradingEnv(gym.Env):
         self.data.fillna(method='ffill', inplace=True)
         self.data.fillna(method='bfill', inplace=True)
         self.data.fillna(0, inplace=True)
-
         # Set the trading activity dataframe
         self.data['Position'] = 0
         self.data['Action'] = 0
@@ -141,11 +140,9 @@ class TradingEnv(gym.Env):
         self.data['Cash'] = float(money)
         self.data['Money'] = self.data['Holdings'] + self.data['Cash']
         self.data['Returns'] = 0.
-
         # Set the RL variables common to every OpenAI gym environments
         self.reward = 0.
         self.done = 0
-
         # Set additional variables related to the trading activity
         self.marketSymbol = marketSymbol
         self.startingDate = startingDate
@@ -157,7 +154,6 @@ class TradingEnv(gym.Env):
         self.epsilon = 0.1
         self.liveData = liveData
         self.timestamp = None
-
         # If required, set a custom starting point for the trading activity
         if startingPoint:
             self.setStartingPoint(startingPoint)
@@ -192,12 +188,11 @@ class TradingEnv(gym.Env):
             context_series.fillna(0, inplace=True)
             context_series = context_series.add_suffix(f'_{symbol}')
             self.data = pd.concat([self.data,context_series],axis=1)
-
+        
         # list of lists
         base_state = self.data[['Close','Low','High','Volume']].iloc[0:stateLength].T.values.tolist()
         context_state = self.data.filter(regex='^Close_',axis=1).iloc[0:stateLength].T.values.tolist()
-        self.state = base_state+context_state+[0]
-        print(self.state)
+        self.state = base_state+context_state+[[0]]
         
 
     def reset(self):
@@ -208,7 +203,6 @@ class TradingEnv(gym.Env):
         
         OUTPUTS: - state: RL state returned to the trading strategy.
         """
-
         # Reset the trading activity dataframe
         self.data['Position'] = 0
         self.data['Action'] = 0
@@ -216,14 +210,12 @@ class TradingEnv(gym.Env):
         self.data['Cash'] = self.data['Cash'][0]
         self.data['Money'] = self.data['Holdings'] + self.data['Cash']
         self.data['Returns'] = 0.
-
         # Reset the RL variables common to every OpenAI gym environments
-        base_state = self.data[['Close' , 'Low' , 'High' , 'Volume']].iloc[0:self.stateLength].T.values.tolist()
+        base_state = self.data[['Close','Low','High','Volume']].iloc[0:self.stateLength].T.values.tolist()
         context_state = self.data.filter(regex='^Close_',axis=1).iloc[0:self.stateLength].T.values.tolist()
-        self.state = base_state+context_state+[0]
+        self.state = base_state+context_state+[[0]]
         self.reward = 0.
         self.done = 0
-
         # Reset additional variables related to the trading activity
         self.t = self.stateLength
         self.numberOfShares = 0
@@ -244,8 +236,7 @@ class TradingEnv(gym.Env):
         # Computation of the RL action lower bound
         deltaValues = - cash - numberOfShares * price * (1 + self.epsilon) * (1 + self.transactionCosts)
         if deltaValues < 0:
-            lowerBound = deltaValues / (
-                        price * (2 * self.transactionCosts + (self.epsilon * (1 + self.transactionCosts))))
+            lowerBound = deltaValues / (price * (2 * self.transactionCosts + (self.epsilon * (1 + self.transactionCosts))))
         else:
             lowerBound = deltaValues / (price * self.epsilon * (1 + self.transactionCosts))
         return lowerBound
@@ -349,7 +340,7 @@ class TradingEnv(gym.Env):
         self.t = self.t + 1
         # Set the RL variables common to every OpenAI gym environments
         columns = ['Close','Low','High','Volume']+[i for i in self.data.columns if 'Close_' in i]
-        self.state = self.data[columns].iloc[self.t - self.stateLength : self.t].T.values.tolist() + [self.data['Position'][self.t - 1]]
+        self.state = self.data[columns].iloc[self.t - self.stateLength : self.t].T.values.tolist() + [ [self.data['Position'][self.t - 1]] ]
         
         if (self.t == self.data.shape[0]):
             if (self.liveData):
@@ -419,10 +410,11 @@ class TradingEnv(gym.Env):
             otherReward = (self.data['Close'][t - 1] - self.data['Close'][t]) / self.data['Close'][t - 1]
         # Set the RL variables common to every OpenAI gym environments
         columns = ['Close','Low','High','Volume']+[i for i in self.data.columns if 'Close_' in i]
-        otherState = self.data[columns].iloc[self.t - self.stateLength : self.t].T.values.tolist() + [otherPosition]
+        otherState = self.data[columns].iloc[self.t - self.stateLength : self.t].T.values.tolist() + [[otherPosition]]
         self.info = {'State': otherState, 'Reward': otherReward, 'Done': self.done}
         # Return the trading environment feedback to the RL trading agent
         return self.state, self.reward, self.done, self.info
+
 
     def render(self, displayOptions=DisplayOption(), _displayManager=None, extraText=""):
         """

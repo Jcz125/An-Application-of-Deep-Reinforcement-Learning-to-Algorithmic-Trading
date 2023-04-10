@@ -33,18 +33,6 @@ from Environment.tradingEnv import TradingEnv
 from Misc.displayManager import *
 from DRL.DRLAgent import DRLAgent
 
-################################# PPO Policy ##################################
-# Default parameters related to preprocessing
-from tradingSimulator import endingDateCrypto
-
-filterOrder = 5
-
-# Default paramters related to the clipping of both the gradient and the RL rewards
-gradientClipping = 1
-rewardClipping = 1
-
-learningUpdatePeriod = 1
-
 
 class RolloutBuffer:
     def __init__(self):
@@ -182,7 +170,7 @@ class PPO(DRLAgent):
                                      (Epsilon-Greedy exploration technique).
     """
 
-    def __init__(self, observationSpace, actionSpace, configsFile='./../Configurations/hyperparameters-ppo.yml'):
+    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-ppo.yml'):
         """
         GOAL: Initializing the RL agent based on the PPO Reinforcement Learning
               algorithm, by setting up the PPO algorithm parameters as well as
@@ -385,7 +373,7 @@ class PPO(DRLAgent):
             # Testing performance
             marketSymbol = trainingEnv.marketSymbol
             startingDate = trainingEnv.endingDate
-            endingDate = '2020-1-1' if marketSymbol not in ['Binance', 'Litecoin', 'Cardano'] else endingDateCrypto
+            endingDate = '2020-1-1'
             money = trainingEnv.data['Money'][0]
             stateLength = trainingEnv.stateLength
             transactionCosts = trainingEnv.transactionCosts
@@ -435,7 +423,7 @@ class PPO(DRLAgent):
                         if interactiveDisplayManager:
                             trainingEnvList[i].render(_displayManager=interactiveDisplayManager)
                     # Execute the learning procedure
-                    self.learning(self.batchSize)
+                    self.learning()
                     # Store the current training results
                     if plotTraining:
                         score[i][episode] = totalReward
@@ -644,8 +632,8 @@ class PPO(DRLAgent):
         """
         # Apply data augmentation techniques to process the testing set
         dataAugmentation = DataAugmentation()
-        testingEnvSmoothed = dataAugmentation.lowPassFilter(testingEnv, filterOrder)
-        trainingEnv = dataAugmentation.lowPassFilter(trainingEnv, filterOrder)
+        testingEnvSmoothed = dataAugmentation.lowPassFilter(testingEnv, self.filterOrder)
+        trainingEnv = dataAugmentation.lowPassFilter(trainingEnv, self.filterOrder)
         # Initialization of some RL variables
         coefficients = self.getNormalizationCoefficients(trainingEnv)
         state = self.processState(testingEnvSmoothed.reset(), coefficients)
@@ -668,10 +656,31 @@ class PPO(DRLAgent):
                 testingEnv.render(_displayManager=interactiveDisplayManager)
         # If required, show the rendering of the trading environment
         if rendering:
-            testingEnv.render()
-            # self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol)
+            testingEnv.render(displayOption=rendering)
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
             analyser.displayPerformance(f'{self.strategyName} (Testing)')
         return testingEnv
+    
+    def saveModel(self, fileName):
+        """
+        GOAL: Save the RL policy, which is the policy Deep Neural Network.
+        
+        INPUTS: - fileName: Name of the file.
+        
+        OUTPUTS: /
+        """
+        torch.save(self.policy_old.state_dict(), fileName)
+
+
+    def loadModel(self, fileName):
+        """
+        GOAL: Load a RL policy, which is the policy Deep Neural Network.
+        
+        INPUTS: - fileName: Name of the file.
+        
+        OUTPUTS: /
+        """
+        self.policy_old.load_state_dict(torch.load(fileName, map_location=lambda storage, loc: storage))
+        self.policy.load_state_dict(torch.load(fileName, map_location=lambda storage, loc: storage))

@@ -7,6 +7,8 @@ model:
   eps_clip: 0.2
   targetNetworkUpdate: 1000
   learningUpdatePeriod: 1
+  # Not used
+  learningRate: 0.0001
   
   # Default parameters related to the Experience Replay mechanism
   capacity: 100000

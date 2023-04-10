@@ -100,7 +100,7 @@ class DRQN(nn.Module):
         torch.nn.init.xavier_uniform_(self.fc3.weight)
         torch.nn.init.xavier_uniform_(self.fc4.weight)
         torch.nn.init.xavier_uniform_(self.fc5.weight)
-        # lstm layers
+        # LSTM layers
         self.lstm1 = nn.LSTM(
             input_size=numberOfOutputs,
             hidden_size=2,
@@ -462,10 +462,10 @@ class TDRQN(TDQNBase):
                 testingEnv.render(_displayManager=interactiveDisplayManager)
         # If required, show the rendering of the trading environment
         if rendering:
-            testingEnv.render()
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol)
+            testingEnv.render(displayOptions=rendering)
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraText=self.strategyName)
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
-            analyser.displayPerformance(f'{self.strategyName} (TEsting)')
+            analyser.displayPerformance(f'{self.strategyName} (Testing)')
         return testingEnv
