@@ -202,20 +202,33 @@ class DCQN(nn.Module):
                  numberOfNeurons,
                  numberOfLayers=5,
                  blockType='linear',
-                 dropout=0.2):
+                 dropout=0.5):
         """
         GOAL: Defining and initializing the Deep Neural Network of the
               DQN Reinforcement Learning algorithm.
         """
         # Call the constructor of the parent class (Pytorch torch.nn.Module)
         super().__init__()
-        blockTypes = {'linear': LinearBlock, 'attention': AttentionBlock, 'conv': ConvBlock}
-        block = blockTypes[block]
-        if blockType == 'conv': args = { 'kernel_size': 2, 'stride': 1 }
-        input_block = block(numberOfInputs, numberOfNeurons, dropout=dropout, **args)
+        self.blockType = blockType
+        conv_block_args = {
+            'kernel_size': [2, 2, 2],
+            'stride': [1, 1, 1]
+        }
+        if blockType == 'linear':
+            block = LinearBlock
+        elif blockType == 'attention':
+            block = AttentionBlock
+        elif blockType == 'conv':
+            block = ConvBlock
+        input_block = block(numberOfInputs, numberOfNeurons, dropout=dropout)
+        conv_block_args = {
+            'kernel_size': [2, 2, 2],
+            'stride': [1, 1, 1]
+        }
         hidden_blocks = [
-            block(numberOfNeurons, numberOfNeurons, dropout=dropout)
-            for _ in range(numberOfLayers - 2)
+            block(numberOfNeurons, numberOfNeurons, dropout=dropout, kernel_size=conv_block_args['kernel_size'][i], stride=conv_block_args['stride'][i]) 
+                if blockType == 'conv' else block(numberOfNeurons, numberOfNeurons, dropout=dropout)
+            for i in range(numberOfLayers - 2)
         ]
         self.hidden_layers = nn.Sequential(input_block, *hidden_blocks)
         self.out_layer = nn.Linear(numberOfNeurons, numberOfOutputs)
@@ -224,6 +237,8 @@ class DCQN(nn.Module):
         """
         GOAL: Implementing the forward pass of the Deep Neural Network.
         """
+        if self.blockType == 'conv':
+            x = x.permute(1, 2, 0)
         x = self.hidden_layers(x)
         if len(x.shape) > 2:
             x = x[:, -1, :]
@@ -239,7 +254,7 @@ class TDCQN(DRLAgent):
     GOAL: Implementing an intelligent trading agent based on the DQN
           Reinforcement Learning algorithm.
     """
-    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-ppo.yml', **kwargs):
+    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-tdcqn.yml', **kwargs):
         """
         GOAL: Initializing the RL agent based on the DQN Reinforcement Learning
               algorithm, by setting up the DQN algorithm parameters as well as
@@ -269,6 +284,7 @@ class TDCQN(DRLAgent):
         self.blockType = kwargs['blockType'] if 'blockType' in kwargs else 'linear'
         self.strategyName += f'_{self.blockType}'
         self.timesteps = self.model_params['timesteps'] if self.blockType != 'linear' else 1
+        self.numberOfLayers = self.model_params['numberOfLayers']
         # Set the Experience Replay mechnism
         self.replayMemory = ReplayMemoryCNN(self.capacity)
         # Set the Epsilon-Greedy exploration technique
@@ -316,7 +332,7 @@ class TDCQN(DRLAgent):
             action = action.item()
             Q = Q.item()
             QValues = QValues.cpu().numpy()
-            return action, Q, 
+            return action, Q, QValues
 
 
     def learning(self, batchSize):

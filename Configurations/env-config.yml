@@ -23,7 +23,7 @@ environment:
   bounds: [1, 30]
   step: 1
 
-  numberOfEpisodes: 50
+  numberOfEpisodes: 2 #50
 
   # Dictionary listing the fictive stocks supported
   fictives: {
@@ -137,6 +137,7 @@ environment:
   strategiesAI: {
     'TDQN' : 'TDQN',
     'TDRQN': 'TDRQN',
+    'TDCQN': 'TDCQN',
     'PPO' : 'PPO',
   }
 

@@ -656,7 +656,7 @@ class PPO(DRLAgent):
                 testingEnv.render(_displayManager=interactiveDisplayManager)
         # If required, show the rendering of the trading environment
         if rendering:
-            testingEnv.render(displayOption=rendering)
+            testingEnv.render(displayOptions=rendering)
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)
