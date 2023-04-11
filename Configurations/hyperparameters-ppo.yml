@@ -7,6 +7,7 @@ model:
   eps_clip: 0.2
   targetNetworkUpdate: 1000
   learningUpdatePeriod: 1
+  numberOfLayers: 1
   # Not used
   learningRate: 0.0001
   

@@ -90,8 +90,6 @@ class TradingSimulator:
         self.strategiesAI = environment_params["strategiesAI"]
         self.percentageCosts = environment_params["percentageCosts"]
         self.context = environment_params["context"]
-
-        self.observationSpace = 1 + (self.stateLength - 1) * (4+len(self.context))
         # Variables setting up the default transaction costs
         self.transactionCosts = self.percentageCosts[1] / 100
 
@@ -156,16 +154,18 @@ class TradingSimulator:
                             saveStrategy=True,
                             **extraModelArgs):
         # 1. INIT PHASE
+        context = {} if strategyName == "PPO" or strategyName == "TDCQN" else self.context
+        self.observationSpace = 1 + (self.stateLength - 1) * (4 + len(context))
         stock = self.getStock(stockName)
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         # 2. TRAINING PHASE
         # Initialize the trading environment associated with the training phase
         print("=================================== TRAINING PHASE ===================================")
-        trainingEnv = TradingEnv(stock, self.startingDate, self.splittingDate, money, self.context, self.stateLength, self.transactionCosts)
+        trainingEnv = TradingEnv(stock, self.startingDate, self.splittingDate, money, context, self.stateLength, self.transactionCosts)
         # Training of the trading strategy
         if batch_mode:
             trainingEnv = tradingStrategy.trainingBatch(trainingEnv, 
-                                                        self.context,
+                                                        context,
                                                         trainingParameters=trainingParameters,
                                                         batch_size=batch_size,
                                                         verbose=True, 
@@ -175,7 +175,7 @@ class TradingSimulator:
                                                         interactiveTradingGraph=interactiveTrain)
         else:
             trainingEnv = tradingStrategy.training(trainingEnv, 
-                                                   self.context,
+                                                   context,
                                                    trainingParameters=trainingParameters,
                                                    verbose=True, 
                                                    rendering=DisplayOption(False, plotTrainEnv, False),
@@ -185,7 +185,7 @@ class TradingSimulator:
         # 3. TESTING PHASE
         # Initialize the trading environment associated with the testing phase
         print("=================================== TESTING PHASE ===================================")
-        testingEnv = TradingEnv(stock, self.splittingDate, self.endingDate, money, self.context, self.stateLength, self.transactionCosts, liveData=testOnLiveData)
+        testingEnv = TradingEnv(stock, self.splittingDate, self.endingDate, money, context, self.stateLength, self.transactionCosts, liveData=testOnLiveData)
         # Testing of the trading strategy
         testingEnv = tradingStrategy.testing(trainingEnv,
                                              testingEnv,
@@ -226,6 +226,8 @@ class TradingSimulator:
               testbench, with both learning and testing phases.
         """
         # 1. INIT PHASE
+        context = {} if strategyName == "PPO" or strategyName == "TDCQN" else self.context
+        self.observationSpace = 1 + (self.stateLength - 1) * (4+len(context))
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         tradingStrategies, trainingEnvs, testingEnvs = [], [], []
 
@@ -234,11 +236,11 @@ class TradingSimulator:
             # 2. TRAINING PHASE
             # Initialize the trading environment associated with the training phase
             print("=================================== TRAINING PHASE ===================================")
-            trainingEnv = TradingEnv(stock, self.startingDate, self.splittingDate, money, self.context, self.stateLength, self.transactionCosts)
+            trainingEnv = TradingEnv(stock, self.startingDate, self.splittingDate, money, context, self.stateLength, self.transactionCosts)
             # Training of the trading strategy
             if batch_mode:
                 trainingEnv = tradingStrategy.trainingBatch(trainingEnv, 
-                                                            self.context,
+                                                            context,
                                                             trainingParameters=trainingParameters,
                                                             batch_size=batch_size,
                                                             verbose=True, 
@@ -248,7 +250,7 @@ class TradingSimulator:
                                                             interactiveTradingGraph=interactiveTrain)
             else:
                 trainingEnv = tradingStrategy.training(trainingEnv, 
-                                                       self.context,
+                                                       context,
                                                        trainingParameters=trainingParameters,
                                                        verbose=True, 
                                                        rendering=DisplayOption(False, plotTrainEnv, False),
@@ -258,7 +260,7 @@ class TradingSimulator:
             # 3. TESTING PHASE
             # Initialize the trading environment associated with the testing phase
             print("=================================== TESTING PHASE ===================================")
-            testingEnv = TradingEnv(stock, self.splittingDate, self.endingDate, money, self.context, self.stateLength, self.transactionCosts, liveData=testOnLiveData)
+            testingEnv = TradingEnv(stock, self.splittingDate, self.endingDate, money, context, self.stateLength, self.transactionCosts, liveData=testOnLiveData)
             # Testing of the trading strategy
             testingEnv = tradingStrategy.testing(trainingEnv,
                                                 testingEnv,
@@ -318,6 +320,7 @@ class TradingSimulator:
                  - testingEnv: Trading environment related to the testing phase.
         """
         # 1. INIT PHASE
+        context = {} if strategyName == "PPO" or strategyName == "TDCQN" else self.context
         stock = self.getStock(stockName)
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         fileName = f"Strategies/{tradingStrategy.strategyName}_{stock}_{self.startingDate}_{self.splittingDate}.model"
@@ -330,8 +333,8 @@ class TradingSimulator:
     
         # 3. TESTING PHASE
         # Initialize the trading environments associated with the testing phase
-        trainingEnv = TradingEnv(stock, self.startingDate, self.splittingDate, money, self.context, self.stateLength, self.transactionCosts)
-        testingEnv = TradingEnv(stock, self.splittingDate, self.endingDate, money, self.context, self.stateLength, self.transactionCosts, liveData=testOnLiveData)
+        trainingEnv = TradingEnv(stock, self.startingDate, self.splittingDate, money, context, self.stateLength, self.transactionCosts)
+        testingEnv = TradingEnv(stock, self.splittingDate, self.endingDate, money, context, self.stateLength, self.transactionCosts, liveData=testOnLiveData)
         # Testing of the trading strategy
         testingEnv = tradingStrategy.testing(trainingEnv,
                                             testingEnv,

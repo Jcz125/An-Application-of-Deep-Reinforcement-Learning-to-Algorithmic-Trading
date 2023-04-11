@@ -17,13 +17,28 @@ import requests
 import os
 
 from io import StringIO
+import yahoo_fin as yf
+import numpy as np
+
+
+class DataDownloader:
+    def __init__(self):
+        pass
+
+    def cleanData(self, dataframe):
+        dataframe.replace(0.0, np.nan, inplace=True)
+        dataframe.interpolate(method='linear', limit=5, limit_area='inside', inplace=True)
+        dataframe.fillna(method='ffill', inplace=True)
+        dataframe.fillna(method='bfill', inplace=True)
+        dataframe.fillna(0, inplace=True)
+        return dataframe
 
 
 ###############################################################################
 ############################## Class AlphaVantage #############################
 ###############################################################################
 
-class AlphaVantage:
+class AlphaVantage(DataDownloader):
     """
     GOAL: Downloading stock market data from the Alpha Vantage API. See the
           AlphaVantage documentation for more information.
@@ -70,16 +85,13 @@ class AlphaVantage:
                    'outputsize': self.outputsize, 'datatype': self.datatype,
                    'apikey': self.apikey}
         response = requests.get(self.link, params=payload)
-
         # Process the CSV file retrieved
         csvText = StringIO(response.text)
         data = pd.read_csv(csvText, index_col='timestamp')
-
         # Process the dataframe to homogenize the output format
         self.data = self.processDataframe(data)
         if (startingDate != 0 and endingDate != 0):
-            self.data = self.data.loc[startingDate:endingDate]
-
+            self.data = self.cleanData(self.data.loc[startingDate:endingDate])
         return self.data
 
 
@@ -98,22 +110,18 @@ class AlphaVantage:
         # Round the timePeriod value to the closest accepted value
         possiblePeriods = [1, 5, 15, 30, 60]
         timePeriod = min(possiblePeriods, key=lambda x: abs(x - timePeriod))
-
         # Send a HTTP request to the AlphaVantage API
         payload = {'function': 'TIME_SERIES_INTRADAY', 'symbol': marketSymbol,
                    'outputsize': self.outputsize, 'datatype': self.datatype,
                    'apikey': self.apikey, 'interval': str(timePeriod) + 'min'}
         response = requests.get(self.link, params=payload)
-
         # Process the CSV file retrieved
         csvText = StringIO(response.text)
         data = pd.read_csv(csvText, index_col='timestamp')
-
         # Process the dataframe to homogenize the output format
         self.data = self.processDataframe(data)
         if (startingDate != 0 and endingDate != 0):
-            self.data = self.data.loc[startingDate:endingDate]
-
+            self.data = self.cleanData(self.data.loc[startingDate:endingDate])
         return self.data
 
 
@@ -148,7 +156,7 @@ class AlphaVantage:
 ########################### Class YahooFinance ################################
 ###############################################################################
 
-class YahooFinance:
+class YahooFinance(DataDownloader):
     """
     GOAL: Downloading stock market data from the Yahoo Finance API. See the
           pandas.datareader documentation for more information.
@@ -181,8 +189,9 @@ class YahooFinance:
           
         OUTPUTS:    - data: Pandas dataframe containing the stock market data.
         """
+        print(marketSymbol)
         data = pdr.data.DataReader(marketSymbol, 'yahoo', startingDate, endingDate)
-        self.data = self.processDataframe(data)
+        self.data = self.cleanData(self.processDataframe(data))
         return self.data
 
 
@@ -200,6 +209,71 @@ class YahooFinance:
         # Adapt the dataframe index and column names
         dataframe.index.names = ['Timestamp']
         dataframe = dataframe[['Open', 'High', 'Low', 'Close', 'Volume']]
+        return dataframe
+    
+
+###############################################################################
+############################## Class YahooFin ##################################
+###############################################################################
+
+class YahooFin(DataDownloader):
+    """
+    GOAL: Downloading stock market data from the Yahoo Finance API. See the
+          pandas.datareader documentation for more information.
+    
+    VARIABLES:  - data: Pandas dataframe containing the stock market data.
+                                
+    METHODS:    - __init__: Object constructor initializing some variables.
+                - getDailyData: Retrieve daily stock market data.
+                - processDataframe: Process a dataframe to homogenize the
+                                    output format.
+    """
+    def __init__(self):
+        """
+        GOAL: Object constructor initializing the class variables. 
+        
+        INPUTS: /      
+        
+        OUTPUTS: /
+        """
+        self.data = pd.DataFrame()
+
+
+    def getDailyData(self, marketSymbol, startingDate, endingDate):
+        """
+        GOAL: Downloding daily stock market data from the Yahoo Finance API. 
+        
+        INPUTS:     - marketSymbol: Stock market symbol.
+                    - startingDate: Beginning of the trading horizon.
+                    - endingDate: Ending of the trading horizon.
+          
+        OUTPUTS:    - data: Pandas dataframe containing the stock market data.
+        """
+        data = yf.stock_info.get_data(marketSymbol , start_date=startingDate, end_date=endingDate)
+        self.data = self.processDataframe(data)
+        return self.data
+
+
+    def processDataframe(self, dataframe):
+        """
+        GOAL: Process a downloaded dataframe to homogenize the output format.
+        
+        INPUTS:     - dataframe: Pandas dataframe to be processed.
+          
+        OUTPUTS:    - dataframe: Processed Pandas dataframe.
+        """
+        # Remove useless columns
+        dataframe['close'] = dataframe['adjclose']
+        del dataframe['adjclose']
+        del dataframe['ticker']
+        # Adapt the dataframe index and column names
+        dataframe.index.names = ['Timestamp']
+        dataframe = dataframe.rename(index=str, 
+                                     columns={"open": "Open", 
+                                              "high": "High",
+                                              "low": "Low",
+                                              "close": "Close",
+                                              "volume": "Volume"})
         return dataframe
 
 

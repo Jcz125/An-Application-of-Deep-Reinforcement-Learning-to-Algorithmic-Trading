@@ -23,6 +23,7 @@ from matplotlib import pyplot as plt
 
 from DataProcessing.dataDownloader import AlphaVantage
 from DataProcessing.dataDownloader import YahooFinance
+from DataProcessing.dataDownloader import YahooFin
 from DataProcessing.dataDownloader import CSVHandler
 from DataProcessing.fictiveStockGenerator import StockGenerator
 
@@ -74,7 +75,7 @@ class TradingEnv(gym.Env):
                  startingDate, 
                  endingDate, 
                  money, 
-                 context, 
+                 context={}, 
                  stateLength=30,
                  transactionCosts=0, 
                  startingPoint=0, 
@@ -124,15 +125,8 @@ class TradingEnv(gym.Env):
                     self.data = downloader1.getDailyData(marketSymbol, startingDate, endingDate)
                 except:
                     self.data = downloader2.getDailyData(marketSymbol, startingDate, endingDate)
-                if saving == True:
-                    csvConverter.dataframeToCSV(csvName, self.data)
-
-        # Interpolate in case of missing data
-        self.data.replace(0.0, np.nan, inplace=True)
-        self.data.interpolate(method='linear', limit=5, limit_area='inside', inplace=True)
-        self.data.fillna(method='ffill', inplace=True)
-        self.data.fillna(method='bfill', inplace=True)
-        self.data.fillna(0, inplace=True)
+                if saving == True: csvConverter.dataframeToCSV(csvName, self.data)
+        
         # Set the trading activity dataframe
         self.data['Position'] = 0
         self.data['Action'] = 0
@@ -155,8 +149,7 @@ class TradingEnv(gym.Env):
         self.liveData = liveData
         self.timestamp = None
         # If required, set a custom starting point for the trading activity
-        if startingPoint:
-            self.setStartingPoint(startingPoint)
+        if startingPoint: self.setStartingPoint(startingPoint)
 
         ### add context
         context_symbols = context.values()
@@ -170,24 +163,14 @@ class TradingEnv(gym.Env):
                 context_series = csvConverter.CSVToDataframe(csvName)
             # Otherwise, download the stock market data from Yahoo Finance and save it in the database
             else:  
-                downloader1 = YahooFinance()
-                downloader2 = AlphaVantage()
-                try:
-                    context_series = downloader1.getDailyData(symbol, startingDate, endingDate)
-                except:
-                    context_series = downloader2.getDailyData(symbol, startingDate, endingDate)
-                if saving == True:
-                    csvConverter.dataframeToCSV(csvName,context_series)
-            # Interpolate in case of missing data
+                downloader = YahooFin()
+                context_series = downloader.getDailyData(symbol, startingDate, endingDate)
+                if saving == True: csvConverter.dataframeToCSV(csvName,context_series)
+            # Pre-process data
             context_series = context_series.reindex(self.data.index)
             context_series = context_series['Close'].to_frame()
-            context_series.replace(0.0, np.nan, inplace=True)
-            context_series.interpolate(method='linear', limit=5, limit_area='inside', inplace=True)
-            context_series.fillna(method='ffill', inplace=True)
-            context_series.fillna(method='bfill', inplace=True)
-            context_series.fillna(0, inplace=True)
             context_series = context_series.add_suffix(f'_{symbol}')
-            self.data = pd.concat([self.data,context_series],axis=1)
+            self.data = pd.concat([self.data,context_series], axis=1)
         
         # list of lists
         base_state = self.data[['Close','Low','High','Volume']].iloc[0:stateLength].T.values.tolist()
@@ -478,14 +461,10 @@ class TradingEnv(gym.Env):
         """
         # Setting a custom starting point
         self.t = np.clip(startingPoint, self.stateLength, len(self.data.index))
-
+        columns = ['Close','Low','High','Volume']+[i for i in self.data.columns if 'Close_' in i]
         # Set the RL variables common to every OpenAI gym environments
-        self.state = [self.data['Close'][self.t - self.stateLength: self.t].tolist(),
-                      self.data['Low'][self.t - self.stateLength: self.t].tolist(),
-                      self.data['High'][self.t - self.stateLength: self.t].tolist(),
-                      self.data['Volume'][self.t - self.stateLength: self.t].tolist(),
-                      [self.data['Position'][self.t - 1]]]
-        if (self.t == self.data.shape[0]):
+        self.state = self.data[columns].iloc[self.t - self.stateLength : self.t].T.values.tolist() + [[self.data['Position'][self.t - 1]]]
+        if(self.t == self.data.shape[0]):
             self.done = 1
 
 

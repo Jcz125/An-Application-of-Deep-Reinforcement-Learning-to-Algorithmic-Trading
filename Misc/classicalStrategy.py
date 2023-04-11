@@ -17,7 +17,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from abc import ABC, abstractmethod
 
-from tradingPerformance import PerformanceEstimator
+from DataProcessing.tradingPerformance import PerformanceEstimator
 from Misc.displayManager import *
 import pickle
 
@@ -423,7 +423,7 @@ class MovingAveragesTF(tradingStrategy):
         
         OUTPUTS: /
         """
-
+        super().__init__()
         self.parameters = parameters
 
 
@@ -709,7 +709,7 @@ class MovingAveragesMR(tradingStrategy):
         
         OUTPUTS: /
         """
-
+        super().__init__()
         self.parameters = parameters
 
 

@@ -383,7 +383,7 @@ class TDQN(TDQNBase):
             ax.legend(["Training", "Testing"])
             displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
-                self.plotTraining(score[i][:episode], marketSymbol, displayOption=plotTraining)
+                self.plotTraining(score[i], marketSymbol, displayOption=plotTraining)
         
         # If required, print the strategy performance in a table
         if showPerformance:
@@ -440,7 +440,7 @@ class TDQN(TDQNBase):
         # If required, show the rendering of the trading environment
         if rendering:
             testingEnv.render(displayOptions=rendering)
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraText=self.strategyName)
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraText="Testing")
         
         # If required, print the strategy performance in a table
         if showPerformance:

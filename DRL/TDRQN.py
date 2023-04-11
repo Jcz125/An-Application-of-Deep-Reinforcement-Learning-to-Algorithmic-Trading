@@ -64,7 +64,13 @@ class DRQN(nn.Module):
     METHODS:    - __init__: Initialization of the Deep Neural Network.
                 - forward: Forward pass of the Deep Neural Network.
     """
-    def __init__(self, numberOfInputs, numberOfOutputs, numberOfNeurons, dropout):
+    def __init__(self, 
+                 numberOfInputs, 
+                 numberOfOutputs, 
+                 numberOfNeurons, 
+                 dropout, 
+                 numberOfLayers=5,
+                 blockType='LSTM'):
         """
         GOAL: Defining and initializing the Deep Neural Network of the
               DQN Reinforcement Learning algorithm.
@@ -101,12 +107,22 @@ class DRQN(nn.Module):
         torch.nn.init.xavier_uniform_(self.fc4.weight)
         torch.nn.init.xavier_uniform_(self.fc5.weight)
         # LSTM layers
-        self.lstm1 = nn.LSTM(
-            input_size=numberOfOutputs,
-            hidden_size=2,
-            num_layers=1,
-            batch_first=True,
-        )
+        if blockType == 'LSTM':
+            self.rnn_block = nn.LSTM(
+                input_size=numberOfOutputs,
+                hidden_size=numberOfOutputs,
+                num_layers=numberOfLayers,
+                batch_first=True,
+            )
+        elif blockType == 'GRU':
+            self.rnn_block = nn.GRU(
+                input_size=numberOfOutputs,
+                hidden_size=numberOfOutputs,
+                num_layers=numberOfLayers,
+                batch_first=True,
+            )
+        else:
+            self.rnn_block = nn.Identity()
 
 
     def forward(self, input):
@@ -122,7 +138,7 @@ class DRQN(nn.Module):
         x = self.dropout3(F.leaky_relu(self.bn3(self.fc3(x))))
         x = self.dropout4(F.leaky_relu(self.bn4(self.fc4(x))))
         output = self.fc5(x)
-        output = self.lstm1(output)
+        output = self.rnn_block(output)
         return output
 
 
@@ -181,7 +197,11 @@ class TDRQN(TDQNBase):
                                      (Epsilon-Greedy exploration technique).
     """
 
-    def __init__(self, observationSpace, actionSpace):
+    def __init__(self, 
+                 observationSpace, 
+                 actionSpace, 
+                 configsFile='./Configurations/hyperparameters-drqn.yml', 
+                 blockType='LSTM'):
         """
         GOAL: Initializing the RL agent based on the DQN Reinforcement Learning
               algorithm, by setting up the DQN algorithm parameters as well as
@@ -207,10 +227,23 @@ class TDRQN(TDQNBase):
 
         OUTPUTS: /
         """
-        super().__init__(observationSpace, actionSpace)
+        super().__init__(observationSpace, actionSpace, configsFile)
+        self.blockType = blockType
+        self.strategyName += f'_{self.blockType}'
+        self.numberOfLayers = self.model_params['numberOfLayers']
         # Set the two Deep Neural Networks of the DRQN algorithm (policy and target)
-        self.policyNetwork = DRQN(observationSpace, actionSpace, self.numberOfNeurons, self.dropout).to(self.device)
-        self.targetNetwork = DRQN(observationSpace, actionSpace, self.numberOfNeurons, self.dropout).to(self.device)
+        self.policyNetwork = DRQN(observationSpace, 
+                                  actionSpace, 
+                                  self.numberOfNeurons, 
+                                  self.dropout, 
+                                  numberOfLayers=self.numberOfLayers, 
+                                  blockType=blockType).to(self.device)
+        self.targetNetwork = DRQN(observationSpace, 
+                                  actionSpace, 
+                                  self.numberOfNeurons, 
+                                  self.dropout,
+                                  numberOfLayers=self.numberOfLayers,
+                                  blockType=blockType).to(self.device)
         self.targetNetwork.load_state_dict(self.policyNetwork.state_dict())
         self.policyNetwork.eval()
         self.targetNetwork.eval()
@@ -405,7 +438,7 @@ class TDRQN(TDQNBase):
             ax.legend(["Training", "Testing"])
             displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
-                self.plotTraining(score[i][:episode], marketSymbol, displayOption=plotTraining)
+                self.plotTraining(score[i], marketSymbol, displayOption=plotTraining)
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
@@ -463,7 +496,7 @@ class TDRQN(TDQNBase):
         # If required, show the rendering of the trading environment
         if rendering:
             testingEnv.render(displayOptions=rendering)
-            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraText=self.strategyName)
+            self.plotQValues(QValues0, QValues1, testingEnv.marketSymbol, displayOption=rendering, extraText="Testing")
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(testingEnv.data)

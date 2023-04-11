@@ -2,6 +2,8 @@
 Data/*
 Figures/*
 Models/*
+Strategies/*
+Context/*
 runs/*
 
 ### Python template

@@ -65,7 +65,6 @@ class DRLAgent:
         self.rewardClipping = self.model_params["rewardClipping"]
         self.GPUNumber = self.model_params["GPUNumber"]
         self.ending_date = '2020-1-1' # self.configs['environment']['endingDate']
-
         # Initialise the random function with a new random seed
         random.seed(0)
         # Check availability of CUDA for the hardware (CPU or GPU)
@@ -168,10 +167,12 @@ class DRLAgent:
         ### turn context into returns for each of them and min max them
         for ii in range(4, len(state) - 1):
             context_series = state[ii]
-            returns = [(context_series[i] - context_series[i - 1]) / context_series[i - 1] for i in
-                       range(1, len(context_series))]
+            returns = [
+                (context_series[i] - context_series[i - 1]) / context_series[i - 1] if context_series[i - 1] != 0 else 0
+                for i in range(1, len(context_series))
+            ]
             max_return = max(returns)
-            state[ii] = [(x / (max_return)) for x in returns]
+            state[ii] = [(x / (max_return)) if max_return != 0 else 0 for x in returns]
         # Process the state structure to obtain the appropriate format
         state = [item for sublist in state for item in sublist]
         return state
@@ -252,7 +253,7 @@ class DRLAgent:
         displayManager = DisplayManager(displayOptions=displayOption)
         ax1 = displayManager.add_subplot(111, ylabel='Total reward collected', xlabel='Episode')
         ax1.plot(score)
-        displayManager.show(f"{str(marketSymbol)}_Training_Results")
+        displayManager.show(f"{str(marketSymbol)}_{self.strategyName}_Training_Results")
 
 
     def plotQValues(self, QValues0, QValues1, marketSymbol, displayOption=DisplayOption(), extraText=""):
@@ -270,7 +271,7 @@ class DRLAgent:
         ax1.plot(QValues0)
         ax1.plot(QValues1)
         ax1.legend(['Short', 'Long'])
-        displayManager.show(f"{str(marketSymbol)}_{extraText}_QValues")
+        displayManager.show(f"{str(marketSymbol)}__{self.strategyName}_{extraText}_QValues")
 
 
     def plotExpectedPerformance(self, trainingEnv, trainingParameters=[], iterations=10, 
@@ -395,7 +396,7 @@ class DRLAgent:
             ax.plot([performanceTrain[e][i] for e in range(trainingParameters[0])])
             ax.plot([performanceTest[e][i] for e in range(trainingParameters[0])])
             ax.legend(["Training", "Testing"])
-            displayManager.show(f"{str(marketSymbol)}_Training_Testing_Performance_{str(i+1)}")
+            displayManager.show(f"{str(marketSymbol)}_{self.strategyName}_Training_Testing_Performance_{str(i+1)}")
         # Plot the expected performance of the intelligent DRL trading agent
         displayManager = DisplayManager(displayOptions=trainingTestingExpectedPerformanceDisplayOption)
         ax = displayManager.add_subplot(111, ylabel='Performance (Sharpe Ratio)', xlabel='Episode')
@@ -404,7 +405,7 @@ class DRLAgent:
         ax.fill_between(range(len(expectedPerformanceTrain)), expectedPerformanceTrain-stdPerformanceTrain, expectedPerformanceTrain+stdPerformanceTrain, alpha=0.25)
         ax.fill_between(range(len(expectedPerformanceTest)), expectedPerformanceTest-stdPerformanceTest, expectedPerformanceTest+stdPerformanceTest, alpha=0.25)
         ax.legend(["Training", "Testing"])
-        displayManager.show(f"{str(marketSymbol)}_Training_Testing_Expected_Performance")
+        displayManager.show(f"{str(marketSymbol)}_{self.strategyName}_Training_Testing_Expected_Performance")
         # Closing of the tensorboard writer
         self.writer.close()
         return trainingEnv
@@ -447,7 +448,7 @@ class DRLAgent:
         plt.plot([self.epsilonValue(i) for i in range(10*self.epsilonDecay)])
         plt.xlabel("Iterations")
         plt.ylabel("Epsilon value")
-        displayManager.show(f"EpsilonAnnealing")
+        displayManager.show(f"EpsilonAnnealing_{self.strategyName}")
 
 
     def chooseAction(self, state):

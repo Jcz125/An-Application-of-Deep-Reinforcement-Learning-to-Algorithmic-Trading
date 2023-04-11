@@ -62,7 +62,6 @@ class ReplayMemoryCNN:
                             simultaneously.
         OUTPUTS: /
         """
-        # self.memory = deque(maxlen=capacity)
         self.memory = list()
         self.capacity = capacity
 
@@ -125,7 +124,6 @@ class ReplayMemoryCNN:
         INPUTS: /
         OUTPUTS: /
         """
-        # self.memory = deque(maxlen=capacity)
         self.memory = list()
 
 ###############################################################################
@@ -138,8 +136,12 @@ class LinearBlock(nn.Module):
         super().__init__()
 
         # Definition of some Fully Connected layers
-        self.block = nn.Sequential(nn.Linear(numberOfInputs, numberOfOutputs), nn.ReLU(),
-                                   nn.BatchNorm1d(numberOfOutputs), nn.Dropout(dropout))
+        self.block = nn.Sequential(
+            nn.Linear(numberOfInputs, numberOfOutputs), 
+            nn.ReLU(),
+            nn.BatchNorm1d(numberOfOutputs), 
+            nn.Dropout(dropout)
+        )
         # Xavier initialization for the entire neural network
         torch.nn.init.xavier_uniform_(self.block[0].weight)
 
@@ -151,10 +153,12 @@ class AttentionBlock(nn.Module):
     def __init__(self, n_input, n_output, dropout, **kwargs):
         super().__init__()
         self.proj = nn.Linear(n_input, n_output)
-        self.block = nn.TransformerEncoderLayer(n_output,
-                                                4,
-                                                dim_feedforward=512,
-                                                dropout=dropout)
+        self.block = nn.TransformerEncoderLayer(
+            n_output,
+            4,
+            dim_feedforward=512,
+            dropout=dropout
+        )
 
     def forward(self, x):
         """
@@ -175,16 +179,16 @@ class ConvBlock(nn.Module):
                  stride=1):
         super().__init__()
         self.block = nn.Sequential(
-                        nn.Conv1d(
-                            numberOfInputs,
-                            numberOfOutputs,
-                            kernel_size=kernel_size,
-                            stride=stride
-                        ), 
-                        nn.LeakyReLU(), 
-                        nn.BatchNorm1d(numberOfOutputs),
-                        nn.Dropout(dropout)
-                    )
+            nn.Conv1d(
+                numberOfInputs,
+                numberOfOutputs,
+                kernel_size=kernel_size,
+                stride=stride
+            ), 
+            nn.LeakyReLU(), 
+            nn.BatchNorm1d(numberOfOutputs),
+            nn.Dropout(dropout)
+        )
         torch.nn.init.xavier_uniform_(self.block[0].weight)
 
     def forward(self, x):
@@ -210,35 +214,25 @@ class DCQN(nn.Module):
         # Call the constructor of the parent class (Pytorch torch.nn.Module)
         super().__init__()
         self.blockType = blockType
-        conv_block_args = {
-            'kernel_size': [2, 2, 2],
-            'stride': [1, 1, 1]
-        }
-        if blockType == 'linear':
-            block = LinearBlock
-        elif blockType == 'attention':
-            block = AttentionBlock
-        elif blockType == 'conv':
-            block = ConvBlock
+        conv_block_args = { 'kernel_size': [2, 2, 2], 'stride': [1, 1, 1] }
+        if blockType == 'LINEAR': block = LinearBlock
+        elif blockType == 'ATTENTION': block = AttentionBlock
+        elif blockType == 'CONV': block = ConvBlock
         input_block = block(numberOfInputs, numberOfNeurons, dropout=dropout)
-        conv_block_args = {
-            'kernel_size': [2, 2, 2],
-            'stride': [1, 1, 1]
-        }
         hidden_blocks = [
-            block(numberOfNeurons, numberOfNeurons, dropout=dropout, kernel_size=conv_block_args['kernel_size'][i], stride=conv_block_args['stride'][i]) 
-                if blockType == 'conv' else block(numberOfNeurons, numberOfNeurons, dropout=dropout)
+            block(numberOfNeurons, numberOfNeurons, dropout=dropout, kernel_size=conv_block_args['kernel_size'][i], stride=conv_block_args['stride'][i])
+                if blockType == 'CONV' else block(numberOfNeurons, numberOfNeurons, dropout=dropout)
             for i in range(numberOfLayers - 2)
         ]
         self.hidden_layers = nn.Sequential(input_block, *hidden_blocks)
         self.out_layer = nn.Linear(numberOfNeurons, numberOfOutputs)
+        self.inter_layer = nn.Linear(4, 2)
 
     def forward(self, x):
         """
         GOAL: Implementing the forward pass of the Deep Neural Network.
         """
-        if self.blockType == 'conv':
-            x = x.permute(1, 2, 0)
+        if self.blockType == 'CONV': x = x.permute(1, 2, 0)
         x = self.hidden_layers(x)
         if len(x.shape) > 2:
             x = x[:, -1, :]
@@ -254,7 +248,7 @@ class TDCQN(DRLAgent):
     GOAL: Implementing an intelligent trading agent based on the DQN
           Reinforcement Learning algorithm.
     """
-    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-tdcqn.yml', **kwargs):
+    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-tdcqn.yml', blockType='LINEAR'):
         """
         GOAL: Initializing the RL agent based on the DQN Reinforcement Learning
               algorithm, by setting up the DQN algorithm parameters as well as
@@ -281,9 +275,9 @@ class TDCQN(DRLAgent):
         OUTPUTS: /
         """
         super().__init__(observationSpace, actionSpace, configsFile)
-        self.blockType = kwargs['blockType'] if 'blockType' in kwargs else 'linear'
+        self.blockType = blockType
         self.strategyName += f'_{self.blockType}'
-        self.timesteps = self.model_params['timesteps'] if self.blockType != 'linear' else 1
+        self.timesteps = self.model_params['timesteps'] if self.blockType != 'LINEAR' else 1
         self.numberOfLayers = self.model_params['numberOfLayers']
         # Set the Experience Replay mechnism
         self.replayMemory = ReplayMemoryCNN(self.capacity)
@@ -347,8 +341,7 @@ class TDCQN(DRLAgent):
             # Set the Deep Neural Network in training mode
             self.policyNetwork.train()
             # Sample a batch of experiences from the replay memory
-            state, action, reward, nextState, done = self.replayMemory.sample(
-                batchSize, timesteps=self.timesteps)
+            state, action, reward, nextState, done = self.replayMemory.sample(batchSize, timesteps=self.timesteps)
             # Initialization of Pytorch tensors for the RL experience elements
             state = torch.tensor(state, dtype=torch.float, device=self.device)  # [N, T, E]
             action = torch.tensor(action).long().to(self.device)  # [N,]

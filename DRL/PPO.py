@@ -13,6 +13,7 @@ Institution: University of Bologna
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.distributions import Categorical
 
 import random
@@ -57,12 +58,33 @@ class RolloutBuffer:
 
 
 class ActorCritic(nn.Module):
-    def __init__(self, observationSpace, actionSpace, numberOfNeurons):
+    def __init__(self, 
+                 numberOfInputs, 
+                 numberOfOutputs, 
+                 numberOfNeurons, 
+                 numberOfLayers=1, 
+                 blockType=''):
         super(ActorCritic, self).__init__()
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.blockType = blockType
+        if blockType == 'LSTM':
+            self.rnn_block = nn.LSTM(
+                input_size=numberOfInputs,
+                hidden_size=numberOfInputs,
+                num_layers=numberOfLayers,
+                batch_first=True,
+            )
+        elif blockType == 'GRU':
+            self.rnn_block = nn.GRU(
+                input_size=numberOfInputs,
+                hidden_size=numberOfInputs,
+                num_layers=numberOfLayers,
+                batch_first=True,
+            )
+        else:
+            self.rnn_block = nn.Identity()
         # actor
         self.actor = nn.Sequential(
-            nn.Linear(observationSpace, numberOfNeurons),
+            nn.Linear(numberOfInputs, numberOfNeurons),
             nn.LayerNorm(numberOfNeurons),
             nn.LeakyReLU(),
             nn.Dropout(0.2),
@@ -74,12 +96,12 @@ class ActorCritic(nn.Module):
             nn.LayerNorm(numberOfNeurons),
             nn.LeakyReLU(),
             nn.Dropout(0.2),
-            nn.Linear(numberOfNeurons, actionSpace),
-            nn.Softmax(dim=-1)
+            nn.Linear(numberOfNeurons, numberOfOutputs),
+            nn.Softmax(dim=-1),
         )
         # critic
         self.critic = nn.Sequential(
-            nn.Linear(observationSpace, numberOfNeurons),
+            nn.Linear(numberOfInputs, numberOfNeurons),
             nn.LayerNorm(numberOfNeurons),
             nn.LeakyReLU(),
             nn.Dropout(0.2),
@@ -91,25 +113,28 @@ class ActorCritic(nn.Module):
             nn.LayerNorm(numberOfNeurons),
             nn.LeakyReLU(),
             nn.Dropout(0.2),
-            nn.Linear(numberOfNeurons, 1)
+            nn.Linear(numberOfNeurons, 1),
         )
-
 
     def forward(self):
         raise NotImplementedError
 
+    def actor_part(self, state):
+        out = state
+        if self.blockType == "LSTM" or self.blockType == "GRU":
+            out, _ = self.rnn_block(out.unsqueeze(0))
+        action_probs = self.actor(out)
+        dist = Categorical(action_probs)
+        return dist
 
     def act(self, state):
-        action_probs = self.actor(state)
-        dist = Categorical(action_probs)
+        dist = self.actor_part(state)
         action = dist.sample()
         action_logprob = dist.log_prob(action)
         return action.detach(), action_logprob.detach()
 
-
     def evaluate(self, state, action):
-        action_probs = self.actor(state)
-        dist = Categorical(action_probs)
+        dist = self.actor_part(state)
         action_logprobs = dist.log_prob(action)
         dist_entropy = dist.entropy()
         state_values = self.critic(state)
@@ -170,7 +195,7 @@ class PPO(DRLAgent):
                                      (Epsilon-Greedy exploration technique).
     """
 
-    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-ppo.yml'):
+    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-ppo.yml', blockType='DEFAULT'):
         """
         GOAL: Initializing the RL agent based on the PPO Reinforcement Learning
               algorithm, by setting up the PPO algorithm parameters as well as
@@ -186,18 +211,29 @@ class PPO(DRLAgent):
         OUTPUTS: /
         """
         super().__init__(observationSpace, actionSpace, configsFile)
+        self.blockType = blockType
+        self.strategyName += f'_{self.blockType}'
+        self.numberOfLayers = self.model_params['numberOfLayers']
         # Set the general parameters of the PPO algorithm
         self.learningRateActor = self.model_params['learningRateActor']
         self.learningRateCritic = self.model_params['learningRateCritic']
         self.eps_clip = self.model_params['eps_clip']
         self.K_epochs = self.model_params['K_epochs']
         self.buffer = RolloutBuffer()
-        self.policy = ActorCritic(observationSpace, actionSpace, self.numberOfNeurons).to(self.device)
+        self.policy = ActorCritic(observationSpace, 
+                                  actionSpace, 
+                                  self.numberOfNeurons, 
+                                  numberOfLayers=self.numberOfLayers, 
+                                  blockType=self.blockType).to(self.device)
         self.optimizer = torch.optim.Adam([
             {'params': self.policy.actor.parameters(), 'lr': self.learningRateActor},
             {'params': self.policy.critic.parameters(), 'lr': self.learningRateCritic}
         ])
-        self.policy_old = ActorCritic(observationSpace, actionSpace, self.numberOfNeurons).to(self.device)
+        self.policy_old = ActorCritic(observationSpace, 
+                                      actionSpace, 
+                                      self.numberOfNeurons,
+                                      numberOfLayers=self.numberOfLayers, 
+                                      blockType=self.blockType).to(self.device)
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.MseLoss = nn.MSELoss()
     
@@ -464,7 +500,7 @@ class PPO(DRLAgent):
             ax.legend(["Training", "Testing"])
             displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
-                self.plotTraining(score[i][:episode], marketSymbol, displayOption=plotTraining)
+                self.plotTraining(score[i], marketSymbol, displayOption=plotTraining)
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
@@ -602,7 +638,7 @@ class PPO(DRLAgent):
             ax.legend(["Training", "Testing"])
             displayManager.show(f"{str(marketSymbol)}_TrainingTestingPerformance")
             for i in range(len(trainingEnvList)):
-                self.plotTraining(score[i][:episode], marketSymbol, displayOption=plotTraining)
+                self.plotTraining(score[i], marketSymbol, displayOption=plotTraining)
         # If required, print the strategy performance in a table
         if showPerformance:
             analyser = PerformanceEstimator(trainingEnv.data)
