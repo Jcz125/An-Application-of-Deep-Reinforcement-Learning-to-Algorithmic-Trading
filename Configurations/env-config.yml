@@ -23,7 +23,7 @@ environment:
   bounds: [1, 30]
   step: 1
 
-  numberOfEpisodes: 2 #50
+  numberOfEpisodes: 50
 
   # Dictionary listing the fictive stocks supported
   fictives: {

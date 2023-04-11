@@ -942,7 +942,6 @@ class MovingAveragesMR(tradingStrategy):
         # Generate and show the surface 3D surface plot
         ax.plot_surface(xx, yy, results, cmap=plt.cm.get_cmap('jet'))
         ax.view_init(45, 45)
-        plt.savefig(''.join(['Figures/', str(marketSymbol), '_MAMROptimization3D', '.png']))
         displayManager1.show(f"{str(marketSymbol)}_MAMROptimization3D_Training")
         #plt.show()
 

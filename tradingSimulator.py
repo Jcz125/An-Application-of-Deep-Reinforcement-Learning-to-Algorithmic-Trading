@@ -92,6 +92,10 @@ class TradingSimulator:
         self.context = environment_params["context"]
         # Variables setting up the default transaction costs
         self.transactionCosts = self.percentageCosts[1] / 100
+        dirs = ['./Context/', './runs/', './Strategies/', './Figures/']
+        for d in dirs:
+            if not os.path.exists(d):
+                os.makedirs(d)
 
 
     def getTradingStrategy(self, strategyName, **extraModelArgs):
@@ -152,9 +156,10 @@ class TradingSimulator:
                             testPlotQValues=False,
                             trainTestRendering=False,
                             saveStrategy=True,
+                            withContext=True,
                             **extraModelArgs):
         # 1. INIT PHASE
-        context = {} if strategyName == "PPO" or strategyName == "TDCQN" else self.context
+        context = self.context if withContext else {}
         self.observationSpace = 1 + (self.stateLength - 1) * (4 + len(context))
         stock = self.getStock(stockName)
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
@@ -220,13 +225,14 @@ class TradingSimulator:
                                  testPlotQValues=False,
                                  trainTestRendering=False,
                                  saveStrategy=True,
+                                 withContext=True,
                                  **extraModelArgs):
         """
         GOAL: Simulate a new trading strategy on a list of stocks included in the
               testbench, with both learning and testing phases.
         """
         # 1. INIT PHASE
-        context = {} if strategyName == "PPO" or strategyName == "TDCQN" else self.context
+        context = self.context if withContext else {}
         self.observationSpace = 1 + (self.stateLength - 1) * (4+len(context))
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         tradingStrategies, trainingEnvs, testingEnvs = [], [], []
@@ -292,6 +298,7 @@ class TradingSimulator:
                                  testOnLiveData=False, 
                                  testPlotQValues=False,
                                  trainTestRendering=False,
+                                 withContext=True,
                                  **extraModelArgs):
         """
         GOAL: Simulate an already existing trading strategy on a certain
@@ -320,7 +327,7 @@ class TradingSimulator:
                  - testingEnv: Trading environment related to the testing phase.
         """
         # 1. INIT PHASE
-        context = {} if strategyName == "PPO" or strategyName == "TDCQN" else self.context
+        context = self.context if withContext else {}
         stock = self.getStock(stockName)
         tradingStrategy, trainingParameters = self.getTradingStrategy(strategyName, **extraModelArgs)
         fileName = f"Strategies/{tradingStrategy.strategyName}_{stock}_{self.startingDate}_{self.splittingDate}.model"
