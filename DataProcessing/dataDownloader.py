@@ -64,7 +64,7 @@ class AlphaVantage(DataDownloader):
         OUTPUTS: /
         """
         self.link = 'https://www.alphavantage.co/query'
-        self.apikey = os.environ['AV_API_KEY']
+        self.apikey = 'APIKEY' # os.environ['AV_API_KEY']
         self.datatype = 'csv'
         self.outputsize = 'full'
         self.data = pd.DataFrame()
