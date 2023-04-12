@@ -92,8 +92,7 @@ class ReplayMemoryCNN:
                  - done: RL termination signals of the experience batch sampled.
         """
         if timesteps < 2:
-            state, action, reward, nextState, done = zip(
-                *random.sample(self.memory, batchSize))
+            state, action, reward, nextState, done = zip(*random.sample(self.memory, batchSize))
             return state, action, reward, nextState, done
         idx = random.sample(range(0, len(self.memory) - timesteps + 1), batchSize)
         state, action, reward, nextState, done = [], [], [], [], []
