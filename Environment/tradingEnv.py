@@ -165,16 +165,16 @@ class TradingEnv(gym.Env):
             else:  
                 downloader = YahooFin()
                 context_series = downloader.getDailyData(symbol, startingDate, endingDate)
-                if saving == True: csvConverter.dataframeToCSV(csvName,context_series)
+                if saving == True: csvConverter.dataframeToCSV(csvName, context_series)
             # Pre-process data
             context_series = context_series.reindex(self.data.index)
             context_series = context_series['Close'].to_frame()
             context_series = context_series.add_suffix(f'_{symbol}')
-            self.data = pd.concat([self.data,context_series], axis=1)
+            self.data = pd.concat([self.data, context_series], axis=1)
         
         # list of lists
         base_state = self.data[['Close','Low','High','Volume']].iloc[0:stateLength].T.values.tolist()
-        context_state = self.data.filter(regex='^Close_',axis=1).iloc[0:stateLength].T.values.tolist()
+        context_state = self.data.filter(regex='^Close_', axis=1).iloc[0:stateLength].T.values.tolist()
         self.state = base_state+context_state+[[0]]
         
 

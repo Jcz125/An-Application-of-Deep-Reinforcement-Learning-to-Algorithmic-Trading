@@ -166,5 +166,4 @@ class DataAugmentation:
                     tradingEnvFiltered = self.lowPassFilter(tradingEnvStretched, order)
                     for noise in noiseRange:
                         tradingEnvList.append(self.noiseAddition(tradingEnvFiltered, noise))
-        # tradingEnvList = [self.lowPassFilter(tradingEnv)]
         return tradingEnvList

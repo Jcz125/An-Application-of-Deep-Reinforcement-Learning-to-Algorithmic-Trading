@@ -34,6 +34,7 @@ from DataProcessing.tradingPerformance import PerformanceEstimator
 from DataProcessing.dataAugmentation import DataAugmentation
 from Environment.tradingEnv import TradingEnv
 from Misc.displayManager import *
+from Misc.utils import *
 
 ###############################################################################
 ############################ Class DRLAgent BASE ##############################
@@ -170,15 +171,15 @@ class DRLAgent:
         for ii in range(4, len(state) - 1):
             context_series = state[ii]
             returns = [
-                (context_series[i] - context_series[i - 1]) / context_series[i - 1] if context_series[i - 1] != 0 else 0
+                ((context_series[i] - context_series[i - 1]) / context_series[i - 1]) if context_series[i - 1] != 0 else 0
                 for i in range(1, len(context_series))
             ]
             max_return = max(returns)
             state[ii] = [(x / (max_return)) if max_return != 0 else 0 for x in returns]
+            state[ii] = fillNansWith(state[ii])
         # Process the state structure to obtain the appropriate format
         state = [item for sublist in state for item in sublist]
         return state
-
 
     def processReward(self, reward):
         """

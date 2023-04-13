@@ -92,7 +92,7 @@ class TradingSimulator:
         self.context = environment_params["context"]
         # Variables setting up the default transaction costs
         self.transactionCosts = self.percentageCosts[1] / 100
-        dirs = ['./Context/', './runs/', './Strategies/', './Figures/']
+        dirs = ['./Context/', './runs/', './Strategies/', './Figures/', './Data']
         for d in dirs:
             if not os.path.exists(d):
                 os.makedirs(d)

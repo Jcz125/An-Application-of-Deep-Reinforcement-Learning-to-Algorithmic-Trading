@@ -325,6 +325,7 @@ class TDCQN(DRLAgent):
             action = action.item()
             Q = Q.item()
             QValues = QValues.cpu().numpy()
+            assert np.count_nonzero(np.isnan(QValues)) == 0, f"QValues are nan !"
             return action, Q, QValues
 
 

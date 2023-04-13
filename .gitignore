@@ -5,6 +5,7 @@ Models/*
 Strategies/*
 Context/*
 runs/*
+Data/*
 
 ### Python template
 # Byte-compiled / optimized / DLL files

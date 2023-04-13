@@ -22,9 +22,6 @@ import numpy as np
 
 
 class DataDownloader:
-    def __init__(self):
-        pass
-
     def cleanData(self, dataframe):
         dataframe.replace(0.0, np.nan, inplace=True)
         dataframe.interpolate(method='linear', limit=5, limit_area='inside', inplace=True)
@@ -91,7 +88,8 @@ class AlphaVantage(DataDownloader):
         # Process the dataframe to homogenize the output format
         self.data = self.processDataframe(data)
         if (startingDate != 0 and endingDate != 0):
-            self.data = self.cleanData(self.data.loc[startingDate:endingDate])
+            self.data = self.data.loc[startingDate:endingDate]
+        self.data = self.cleanData(self.data)
         return self.data
 
 
@@ -121,7 +119,8 @@ class AlphaVantage(DataDownloader):
         # Process the dataframe to homogenize the output format
         self.data = self.processDataframe(data)
         if (startingDate != 0 and endingDate != 0):
-            self.data = self.cleanData(self.data.loc[startingDate:endingDate])
+            self.data = self.data.loc[startingDate:endingDate]
+        self.data = self.cleanData(self.data)
         return self.data
 
 
@@ -189,9 +188,9 @@ class YahooFinance(DataDownloader):
           
         OUTPUTS:    - data: Pandas dataframe containing the stock market data.
         """
-        print(marketSymbol)
         data = pdr.data.DataReader(marketSymbol, 'yahoo', startingDate, endingDate)
-        self.data = self.cleanData(self.processDataframe(data))
+        self.data = self.processDataframe(data)
+        self.data = self.cleanData(self.data)
         return self.data
 
 
@@ -251,6 +250,7 @@ class YahooFin(DataDownloader):
         """
         data = yf.stock_info.get_data(marketSymbol , start_date=startingDate, end_date=endingDate)
         self.data = self.processDataframe(data)
+        self.data = self.cleanData(self.data)
         return self.data
 
 
