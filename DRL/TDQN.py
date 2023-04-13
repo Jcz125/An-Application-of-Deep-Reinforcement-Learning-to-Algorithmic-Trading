@@ -351,6 +351,7 @@ class TDQN(TDQNBase):
                     analyser = PerformanceEstimator(trainingEnv.data)
                     performance = analyser.computeSharpeRatio()
                     performanceTrain.append(performance)
+                    print(performance)
                     self.writer.add_scalar('Training performance (Sharpe Ratio)', performance, episode)
                     trainingEnv.reset()
                     # Testing set performance
