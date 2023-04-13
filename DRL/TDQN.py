@@ -246,8 +246,8 @@ class TDQN(TDQNBase):
 
 
     def training(self, 
-                 trainingEnv, 
-                 context,
+                 trainingEnv,
+                 context={}, 
                  trainingParameters=[],
                  verbose=False, 
                  rendering=DisplayOption(), 
@@ -395,7 +395,12 @@ class TDQN(TDQNBase):
         return trainingEnv
 
 
-    def testing(self, trainingEnv, testingEnv, rendering=DisplayOption(), showPerformance=False, interactiveTradingGraph=False):
+    def testing(self, 
+                trainingEnv, 
+                testingEnv, 
+                rendering=DisplayOption(), 
+                showPerformance=False, 
+                interactiveTradingGraph=False):
         """
         GOAL: Test the RL agent trading policy on a new trading environment
               in order to assess the trading strategy performance.

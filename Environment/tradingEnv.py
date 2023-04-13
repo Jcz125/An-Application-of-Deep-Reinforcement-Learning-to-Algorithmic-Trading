@@ -464,7 +464,7 @@ class TradingEnv(gym.Env):
         columns = ['Close','Low','High','Volume']+[i for i in self.data.columns if 'Close_' in i]
         # Set the RL variables common to every OpenAI gym environments
         self.state = self.data[columns].iloc[self.t - self.stateLength : self.t].T.values.tolist() + [[self.data['Position'][self.t - 1]]]
-        if(self.t == self.data.shape[0]):
+        if self.t == self.data.shape[0]:
             self.done = 1
 
 

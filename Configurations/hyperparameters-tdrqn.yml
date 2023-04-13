@@ -4,7 +4,7 @@ model:
   learningRate: 0.0001
   targetNetworkUpdate: 1000
   learningUpdatePeriod: 1
-  numberOfLayers: 2
+  numberOfLayers: 1
   
   # Default parameters related to the Experience Replay mechanism
   capacity: 100000

@@ -65,10 +65,12 @@ class DRLAgent:
         self.rewardClipping = self.model_params["rewardClipping"]
         self.GPUNumber = self.model_params["GPUNumber"]
         self.ending_date = '2020-1-1' # self.configs['environment']['endingDate']
-        # Initialise the random function with a new random seed
-        random.seed(0)
         # Check availability of CUDA for the hardware (CPU or GPU)
         self.device = torch.device('cuda:' + str(self.GPUNumber) if torch.cuda.is_available() else 'cpu')
+        # Initialise the random function with a new random seed
+        random.seed(0)
+        np.random.seed(0)
+        torch.manual_seed(0)
         # Set both the observation and action spaces
         self.observationSpace = observationSpace
         self.actionSpace = actionSpace
@@ -460,8 +462,8 @@ class DRLAgent:
 
 
     def training(self, 
-                 trainingEnv, 
-                 context=None,
+                 trainingEnv,
+                 context={}, 
                  trainingParameters=[],
                  verbose=False, 
                  rendering=DisplayOption(), 
@@ -477,7 +479,7 @@ class DRLAgent:
 
     def trainingBatch(self, 
                       trainingEnv,
-                      context=None,
+                      context={},
                       trainingParameters=[], 
                       batch_size=32,
                       verbose=False, 

@@ -42,5 +42,4 @@ def preprocessing(filename):
     print(df.head())
     df = df.rename(columns={"Price(in dollars)": "Close", "Vol.": "Volume", "Date": "Timestamp"})
     print(df.head())
-
     df.to_csv("Data/NEW" + filename, index=False)

@@ -141,8 +141,8 @@ class DataAugmentation:
         # Application of a filtering (low-pass) operation
         newTradingEnv.data[columns] = newTradingEnv.data[columns].rolling(window=order).mean()
         newTradingEnv.data.loc[idx,columns] = tradingEnv.data[columns].iloc[0:order]
-        # newTradingEnv.data['Open'] = newTradingEnv.data['Close'].shift(1)
-        # newTradingEnv.data['Open'][0] = tradingEnv.data['Open'][0]
+        newTradingEnv.data['Open'] = newTradingEnv.data['Close'].shift(1)
+        newTradingEnv.data['Open'][0] = tradingEnv.data['Open'][0]
         # Return the new trading environment generated
         return newTradingEnv
 
@@ -157,14 +157,14 @@ class DataAugmentation:
                                    by data augmentation techniques.
         """
         # Application of the data augmentation techniques to generate the new trading environments
-        # tradingEnvList = []
-        # for shift in shiftRange:
-        #     tradingEnvShifted = self.shiftTimeSeries(tradingEnv, shift)
-        #     for stretch in stretchRange:
-        #         tradingEnvStretched = self.streching(tradingEnvShifted, stretch)
-        #         for order in filterRange:
-        #             tradingEnvFiltered = self.lowPassFilter(tradingEnvStretched, order)
-        #             for noise in noiseRange:
-        #                 tradingEnvList.append(self.noiseAddition(tradingEnvFiltered, noise))
-        tradingEnvList = [self.lowPassFilter(tradingEnv)]
+        tradingEnvList = []
+        for shift in shiftRange:
+            tradingEnvShifted = self.shiftTimeSeries(tradingEnv, shift)
+            for stretch in stretchRange:
+                tradingEnvStretched = self.streching(tradingEnvShifted, stretch)
+                for order in filterRange:
+                    tradingEnvFiltered = self.lowPassFilter(tradingEnvStretched, order)
+                    for noise in noiseRange:
+                        tradingEnvList.append(self.noiseAddition(tradingEnvFiltered, noise))
+        # tradingEnvList = [self.lowPassFilter(tradingEnv)]
         return tradingEnvList

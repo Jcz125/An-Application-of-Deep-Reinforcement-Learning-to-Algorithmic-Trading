@@ -367,7 +367,7 @@ class PPO(DRLAgent):
 
     def training(self, 
                  trainingEnv,
-                 context,
+                 context={}, 
                  trainingParameters=[],
                  verbose=False, 
                  rendering=DisplayOption(), 
@@ -510,8 +510,8 @@ class PPO(DRLAgent):
         return trainingEnv
 
     def trainingBatch(self, 
-                      trainingEnv, 
-                      context,
+                      trainingEnv,
+                      context={},
                       trainingParameters=[], 
                       batch_size=32,
                       verbose=False, 

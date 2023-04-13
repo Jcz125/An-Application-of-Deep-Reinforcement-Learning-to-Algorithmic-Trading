@@ -129,7 +129,7 @@ class ReplayMemory:
 ###############################################################################
 
 class TDQNBase(DRLAgent):
-    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-dqn.yml'):
+    def __init__(self, observationSpace, actionSpace, configsFile='./Configurations/hyperparameters-tdqn.yml'):
         """
         GOAL: Initializing the RL agent based on the DQN Reinforcement Learning
               algorithm, by setting up the DQN algorithm parameters as well as
@@ -184,28 +184,3 @@ class TDQNBase(DRLAgent):
             Q = Q.item()
             QValues = QValues.cpu().numpy()
             return action, Q, QValues
-
-
-    def learning(self, batchSize):
-        pass
-
-
-    def training(self, 
-                 trainingEnv, 
-                 context=None,
-                 trainingParameters=[],
-                 verbose=False, 
-                 rendering=DisplayOption(), 
-                 plotTraining=DisplayOption(), 
-                 showPerformance=False,
-                 interactiveTradingGraph=False):
-        pass
-        
-    
-    def testing(self, 
-                trainingEnv, 
-                testingEnv, 
-                rendering=DisplayOption(), 
-                showPerformance=False, 
-                interactiveTradingGraph=False):
-        pass

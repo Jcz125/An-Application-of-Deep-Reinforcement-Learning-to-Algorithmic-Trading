@@ -371,7 +371,7 @@ class TDCQN(DRLAgent):
 
     def training(self, 
                  trainingEnv,
-                 context, 
+                 context={}, 
                  trainingParameters=[],
                  verbose=False, 
                  rendering=DisplayOption(), 

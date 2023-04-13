@@ -200,7 +200,7 @@ class TDRQN(TDQNBase):
     def __init__(self, 
                  observationSpace, 
                  actionSpace, 
-                 configsFile='./Configurations/hyperparameters-drqn.yml', 
+                 configsFile='./Configurations/hyperparameters-tdrqn.yml', 
                  blockType='LSTM'):
         """
         GOAL: Initializing the RL agent based on the DQN Reinforcement Learning
@@ -296,7 +296,7 @@ class TDRQN(TDQNBase):
 
     def training(self, 
                  trainingEnv,
-                 context, 
+                 context={}, 
                  trainingParameters=[],
                  verbose=False, 
                  rendering=DisplayOption(), 
